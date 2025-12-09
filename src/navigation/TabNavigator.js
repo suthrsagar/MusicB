@@ -4,10 +4,10 @@ import { Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 // Import Screens
-import HomeScreen from '../screens/HomeScreen';
-import SearchScreen from '../screens/SearchScreen';
-import Premium from '../screens/Premium';
-import SettingsScreen from '../screens/SettingsScreen'; // ✅ NEW
+import HomeScreen from '../screens/Home/HomeScreen';
+import SearchScreen from '../screens/Search/SearchScreen';
+import Premium from '../screens/premium/Premium';
+import SettingsScreen from '../screens/Settings/SettingsScreen'; // ✅ NEW
 
 // Import Header
 import Header from '../Componemt/hedder';
@@ -56,12 +56,12 @@ const TabNavigator = () => {
             <Tab.Screen
                 name="Premium"
                 component={Premium}
-                // listeners={{
-                //     tabPress: (e) => {
-                //         e.preventDefault();
-                //         Alert.alert("Coming Soon", "Premium features are coming soon!");
-                //     },
-                // }}
+            // listeners={{
+            //     tabPress: (e) => {
+            //         e.preventDefault();
+            //         Alert.alert("Coming Soon", "Premium features are coming soon!");
+            //     },
+            // }}
             />
 
             {/* ✅ Profile Removed — Settings Added */}

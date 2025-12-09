@@ -4,10 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // Import Tab Navigator
 import TabNavigator from './TabNavigator';
 
-// Import Stack Screens
-import DetailsScreen from '../screens/DetailsScreen';
-import ResultScreen from '../screens/ResultScreen';
-import SettingsScreen from '../screens/SettingsScreen';
+import ProfileScreen from '../screens/Settings/ProfileScreen.js';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,10 +26,17 @@ const MainNavigator = () => {
                 options={{ headerShown: false }}
             />
 
-            {/* These screens are pushed on top of the tabs */}
-            <Stack.Screen name="Details" component={DetailsScreen} />
-            <Stack.Screen name="Result" component={ResultScreen} />
-            <Stack.Screen name="Settings" component={SettingsScreen} />
+
+            <Stack.Screen
+                name="ProfileScreen"
+                component={ProfileScreen}
+                options={{
+                    headerShown: false,
+                    title: 'Profile',
+                }}
+            />
+
+
         </Stack.Navigator>
     );
 };
