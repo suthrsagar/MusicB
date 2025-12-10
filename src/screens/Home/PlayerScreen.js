@@ -52,7 +52,8 @@ export default function PlayerScreen({ route, navigation }) {
             soundRef.current.stop(() => {
                 soundRef.current.release();
                 soundRef.current = null;
-                progress(0);
+                setProgress(0);
+
                 cb && cb();
             });
         } else cb && cb();
