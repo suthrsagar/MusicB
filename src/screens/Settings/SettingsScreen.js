@@ -14,10 +14,13 @@ const SettingsScreen = ({ navigation }) => {
         <Text style={styles.btn}>Profile Settings</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={styles.btn}
 
-      >
-        <Text style={styles.btn}>Notification Settings</Text>
+        style={styles.btn}
+        onPress={() => navigation.navigate('UserProfileById')}
+        options={{
+          heddershow: false,
+        }} >
+        <Text style={styles.btn}>User Profile</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.btn}

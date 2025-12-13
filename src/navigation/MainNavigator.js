@@ -7,7 +7,7 @@ import TabNavigator from './TabNavigator';
 import HomeScreen from '../screens/Home/HomeScreen.js';
 import PlayerScreen from '../screens/Home/PlayerScreen.js';
 import ProfileScreen from '../screens/Settings/ProfileScreen.js';
-
+import UserProfileById from '../screens/Settings/UserProfileById.js';
 const Stack = createNativeStackNavigator();
 
 const MainNavigator = () => {
@@ -27,7 +27,11 @@ const MainNavigator = () => {
                 component={TabNavigator}
                 options={{ headerShown: false }}
             />
-
+            <Stack.Screen
+                name="UserProfileById"
+                component={UserProfileById}
+                options={{ headerShown: false }}
+            />
             {/* ⭐ HomeScreen अब Tabs के अंदर है */}
             <Stack.Screen
                 name="HomeScreen"
