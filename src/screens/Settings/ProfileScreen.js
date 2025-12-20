@@ -12,6 +12,7 @@ import {
   Platform,
   PermissionsAndroid,
   Linking,
+  StatusBar,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -19,7 +20,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
 
-const BASE_URL = 'http://10.206.215.196:5000';
+import { BASE_URL } from '../../services/apiConfig';
 const API_URL = `${BASE_URL}/api`;
 
 const ProfileScreen = ({ navigation }) => {
@@ -171,84 +172,162 @@ const ProfileScreen = ({ navigation }) => {
     );
   }
 
-  // --- LOGIN / REGISTER VIEW ---
+  // --- LOGIN / REGISTER VIEW (PREMIUM) ---
   if (!isLoggedIn) {
     return (
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>
-          {isRegister ? 'Create Account' : 'Login'}
-        </Text>
+      <View style={styles.authWrapper}>
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
 
-        {isRegister && (
-          <>
-            <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color={theme.colors.textSecondary} />
-              <TextInput
-                style={styles.input}
-                placeholder="Username"
-                placeholderTextColor={theme.colors.textSecondary}
-                value={username}
-                onChangeText={setUsername}
-              />
+        {/* Dynamic Background Decor */}
+        <View style={styles.topGradient} />
+        <View style={styles.blurCircle1} />
+        <View style={styles.blurCircle2} />
+
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header Section */}
+          <View style={styles.authHeader}>
+            <View style={styles.logoCircle}>
+              <Ionicons name="musical-notes" size={50} color="#fff" />
+            </View>
+            <Text style={styles.welcomeTitle}>Welcome to MusicZ</Text>
+            <Text style={styles.subSubtitle}>
+              {isRegister
+                ? "Join the community and start your musical journey today."
+                : "Your personal music universe is just one login away."}
+            </Text>
+          </View>
+
+          {/* Form Card */}
+          <View style={styles.authCard}>
+            <Text style={styles.formTitle}>
+              {isRegister ? 'Create Account' : 'Sign In'}
+            </Text>
+
+            {isRegister && (
+              <>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Username</Text>
+                  <View style={styles.inputField}>
+                    <Ionicons name="person-outline" size={20} color={theme.colors.textSecondary} />
+                    <TextInput
+                      style={styles.field}
+                      placeholder="Name "
+                      placeholderTextColor="#999"
+                      value={username}
+                      onChangeText={setUsername}
+                    />
+                  </View>
+                </View>
+
+                <View style={[styles.inputGroup, { alignItems: 'center', marginVertical: 10 }]}>
+                  <TouchableOpacity style={styles.premiumImageBox} onPress={pickImage}>
+                    {imageUri ? (
+                      <Image source={{ uri: imageUri }} style={styles.premiumAvatar} />
+                    ) : (
+                      <View style={{ alignItems: 'center' }}>
+                        <Ionicons name="camera" size={32} color={theme.colors.primary} />
+                        <Text style={styles.photoHint}>Profile Photo</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Email Address</Text>
+              <View style={styles.inputField}>
+                <Ionicons name="mail-outline" size={20} color={theme.colors.textSecondary} />
+                <TextInput
+                  style={styles.field}
+                  placeholder="Enter email"
+                  placeholderTextColor="#999"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
             </View>
 
-            <TouchableOpacity style={styles.imageBox} onPress={pickImage}>
-              {imageUri ? (
-                <Image source={{ uri: imageUri }} style={styles.avatar} />
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Password</Text>
+              <View style={styles.inputField}>
+                <Ionicons name="lock-closed-outline" size={20} color={theme.colors.textSecondary} />
+                <TextInput
+                  style={styles.field}
+                  placeholder="Enter password"
+                  placeholderTextColor="#999"
+                  secureTextEntry
+                  value={password}
+                  onChangeText={setPassword}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.primaryBtn, btnLoading && { opacity: 0.8 }]}
+              onPress={isRegister ? handleRegister : handleLogin}
+              disabled={btnLoading}
+            >
+              {btnLoading ? (
+                <ActivityIndicator color="#fff" />
               ) : (
-                <View style={{ alignItems: 'center' }}>
-                  <Ionicons name="camera-outline" size={30} color={theme.colors.textSecondary} />
-                  <Text style={{ color: theme.colors.textSecondary }}>Select Profile Photo *</Text>
-                </View>
+                <>
+                  <Text style={styles.primaryBtnText}>
+                    {isRegister ? 'Sign Up' : 'Continue'}
+                  </Text>
+                  <Ionicons name="arrow-forward" size={18} color="#fff" style={{ marginLeft: 10 }} />
+                </>
               )}
             </TouchableOpacity>
-          </>
-        )}
 
-        <View style={styles.inputContainer}>
-          <Ionicons name="mail-outline" size={20} color={theme.colors.textSecondary} />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor={theme.colors.textSecondary}
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-          />
-        </View>
+            <View style={styles.footerLinks}>
+              <Text style={styles.footerText}>
+                {isRegister ? "Already have an account? " : "Don't have an account? "}
+              </Text>
+              <TouchableOpacity onPress={() => setIsRegister(!isRegister)}>
+                <Text style={styles.footerLinkText}>
+                  {isRegister ? 'Log In' : 'Join Now'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-        <View style={styles.inputContainer}>
-          <Ionicons name="lock-closed-outline" size={20} color={theme.colors.textSecondary} />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor={theme.colors.textSecondary}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-        </View>
+            <View style={{ marginTop: 30, alignItems: 'center' }}>
+              <Text style={styles.termsText}>
+                By continuing, you agree to MusicZ's
+              </Text>
+              <Text style={[styles.termsText, { fontWeight: '700', textDecorationLine: 'underline' }]}>
+                Terms of Service & Privacy Policy
+              </Text>
+            </View>
+          </View>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={isRegister ? handleRegister : handleLogin}
-          disabled={btnLoading}
-        >
-          {btnLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.btnText}>
-              {isRegister ? 'Sign Up' : 'Login'}
-            </Text>
-          )}
-        </TouchableOpacity>
+          {/* Feature Highlight */}
+          <View style={styles.featureRow}>
+            <View style={styles.featItem}>
+              <Ionicons name="flash" size={16} color={theme.colors.primary} />
+              <Text style={styles.featText}>Ad-free</Text>
+            </View>
+            <View style={styles.featDivider} />
+            <View style={styles.featItem}>
+              <Ionicons name="headset" size={16} color={theme.colors.primary} />
+              <Text style={styles.featText}>HD Audio</Text>
+            </View>
+            <View style={styles.featDivider} />
+            <View style={styles.featItem}>
+              <Ionicons name="cloud-download" size={16} color={theme.colors.primary} />
+              <Text style={styles.featText}>Offline</Text>
+            </View>
+          </View>
 
-        <Text style={styles.link} onPress={() => setIsRegister(!isRegister)}>
-          {isRegister
-            ? 'Already have account? Login'
-            : 'Create new account'}
-        </Text>
-      </ScrollView>
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </View>
     );
   }
 
@@ -345,7 +424,211 @@ const styles = StyleSheet.create({
   container: { flexGrow: 1, justifyContent: 'center', padding: 24, backgroundColor: theme.colors.background },
   center: { flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' },
 
-  // Auth Styles
+  // --- PREMIUM AUTH STYLES (LIGHT) ---
+  authWrapper: {
+    flex: 1,
+    backgroundColor: '#F7F9FC', // Light blueish gray
+  },
+  topGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 450,
+    backgroundColor: '#fff',
+    borderBottomLeftRadius: 60,
+    borderBottomRightRadius: 60,
+    ...theme.shadows.soft,
+  },
+  blurCircle1: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: theme.colors.primary,
+    opacity: 0.05,
+  },
+  blurCircle2: {
+    position: 'absolute',
+    bottom: 150,
+    left: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: theme.colors.secondary,
+    opacity: 0.1,
+  },
+  scrollContainer: {
+    paddingHorizontal: 25,
+    paddingTop: Platform.OS === 'ios' ? 60 : 70,
+    paddingBottom: 40,
+  },
+  authHeader: {
+    alignItems: 'center',
+    marginBottom: 35,
+  },
+  logoCircle: {
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    elevation: 8,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+  },
+  welcomeTitle: {
+    fontSize: 30,
+    fontWeight: '900',
+    color: theme.colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subSubtitle: {
+    fontSize: 15,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: 30,
+  },
+  authCard: {
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    padding: 25,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F0F3F9',
+  },
+  formTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: theme.colors.text,
+    marginBottom: 25,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.colors.text,
+    opacity: 0.6,
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  inputField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7F9FC',
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    height: 56,
+    borderWidth: 1,
+    borderColor: '#E8EDF5',
+  },
+  field: {
+    flex: 1,
+    marginLeft: 12,
+    color: theme.colors.text,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  primaryBtn: {
+    backgroundColor: theme.colors.primary,
+    height: 58,
+    borderRadius: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    elevation: 6,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+  },
+  primaryBtnText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 25,
+  },
+  footerText: {
+    color: theme.colors.textSecondary,
+    fontSize: 14,
+  },
+  footerLinkText: {
+    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 40,
+  },
+  featItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  featText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginLeft: 6,
+    fontWeight: '700',
+  },
+  featDivider: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D1D9E6',
+    marginHorizontal: 15,
+  },
+  premiumImageBox: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#F7F9FC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    borderStyle: 'dashed',
+  },
+  premiumAvatar: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+  },
+  photoHint: {
+    fontSize: 10,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
+    fontWeight: '800',
+  },
+  termsText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+
+  // Auth Styles (Old - Deprecated but kept for safety if needed internally)
   title: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginBottom: 30, color: theme.colors.text },
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface, borderRadius: 12, paddingHorizontal: 15, marginBottom: 15, height: 55, ...theme.shadows.soft },
   input: { flex: 1, marginLeft: 10, color: theme.colors.text, fontSize: 16 },

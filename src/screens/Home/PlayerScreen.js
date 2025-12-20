@@ -19,7 +19,7 @@ import { useMusic } from '../../context/MusicContext';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://10.206.215.196:5000';
+import { BASE_URL } from '../../services/apiConfig';
 
 const PlayerScreen = ({ route, navigation }) => {
   // Player fixed

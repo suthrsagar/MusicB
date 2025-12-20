@@ -14,7 +14,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
 
-const BASE_URL = 'http://10.206.215.196:5000';
+import { BASE_URL } from '../../services/apiConfig';
 
 import { useMusic } from '../../context/MusicContext';
 

@@ -17,7 +17,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://10.206.215.196:5000';
+import { BASE_URL } from '../../services/apiConfig';
 
 const Premium = () => {
   const [selectedPlan, setSelectedPlan] = useState('monthly'); // 'monthly' | 'yearly'

@@ -6,7 +6,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../theme';
 
-const BASE_URL = 'http://10.206.215.196:5000';
+import { BASE_URL } from '../../services/apiConfig';
 
 const ManageSongsScreen = () => {
     const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'all'

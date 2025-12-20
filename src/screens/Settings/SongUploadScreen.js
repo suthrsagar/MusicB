@@ -16,6 +16,7 @@ import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
+import { BASE_URL } from '../../services/apiConfig';
 
 const SongUploadScreen = () => {
   const navigation = useNavigation();
@@ -101,7 +102,7 @@ const SongUploadScreen = () => {
       if (album) formData.append('album', album);
       if (genre) formData.append('genre', genre);
 
-      const response = await axios.post('http://10.206.215.196:5000/api/song/upload', formData, {
+      const response = await axios.post(`${BASE_URL}/api/song/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'x-auth-token': token,

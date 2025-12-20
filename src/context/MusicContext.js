@@ -4,7 +4,7 @@ import { Alert } from 'react-native';
 
 const MusicContext = createContext();
 
-const BASE_URL = 'http://10.206.215.196:5000';
+import { BASE_URL } from '../services/apiConfig';
 
 export const MusicProvider = ({ children }) => {
     const [currentSong, setCurrentSong] = useState(null);

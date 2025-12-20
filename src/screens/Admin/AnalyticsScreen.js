@@ -6,7 +6,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 
-const BASE_URL = 'http://10.206.215.196:5000';
+import { BASE_URL } from '../../services/apiConfig';
 const screenWidth = Dimensions.get('window').width;
 
 const AnalyticsScreen = () => {
