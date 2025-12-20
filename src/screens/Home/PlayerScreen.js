@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const BASE_URL = 'http://10.206.215.196:5000';
 
 const PlayerScreen = ({ route, navigation }) => {
+  // Player fixed
   const { song, playlist } = route.params || {};
   const {
     currentSong,
