@@ -1,122 +1,181 @@
-  import React from 'react';
-  import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+  Image,
+} from 'react-native';
+import axios from 'axios';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
-  export default function HomeScreen({ navigation }) {
+const BASE_URL = 'http://10.206.215.196:5000';
 
-    const songs = [
-      { id: '1', name: 'Softy Love', file: 'song1.mp3', image: require('../../assest/image/logo.jpg') },
-      { id: '2', name: 'Calm Melody', file: 'song1.mp3', image: require('../../assest/image/logo.jpg') },
-      { id: '3', name: 'Relax Vibes', file: 'song1.mp3', image: require('../../assest/image/logo.jpg') },
-    ];
+const HomeScreen = () => {
+  const navigation = useNavigation();
+  const [songs, setSongs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-    const openPlayer = (song, index) => {
-      navigation.navigate("PlayerScreen", { song, index, songs });
-    };
+  const fetchSongs = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/api/song`);
+      setSongs(response.data);
+    } catch (error) {
+      console.error('Error fetching songs:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
+  useEffect(() => {
+    fetchSongs();
+  }, []);
+
+  // Reload songs whenever the screen comes into focus (e.g., after upload)
+  useFocusEffect(
+    useCallback(() => {
+      fetchSongs();
+    }, [])
+  );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchSongs();
+  };
+
+  const renderSongItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate('PlayerScreen', { song: item })}
+      activeOpacity={0.8}
+    >
+      <View style={styles.cardImageContainer}>
+        <Ionicons name="musical-notes" size={40} color="#fff" />
+      </View>
+      <View style={styles.cardContent}>
+        <Text style={styles.songTitle} numberOfLines={1}>
+          {item.title}
+        </Text>
+        <Text style={styles.artistName} numberOfLines={1}>
+          {item.artist}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  if (loading) {
     return (
-      <ScrollView style={styles.container}>
-
-        {/* Header */}
-        <Text style={styles.header}>Good Evening 👋</Text>
-
-        {/* Recommended Row (Spotify Style) */}
-        <Text style={styles.sectionTitle}>Recommended For You</Text>
-        <FlatList
-          horizontal
-          data={songs}
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
-            <TouchableOpacity style={styles.horizontalCard} onPress={() => openPlayer(item, index)}>
-              <Image source={item.image} style={styles.horizontalImage} />
-              <Text style={styles.horizontalText}>{item.name}</Text>
-            </TouchableOpacity>
-          )}
-        />
-
-        {/* All Songs List */}
-        <Text style={styles.sectionTitle}>All Songs</Text>
-        <FlatList
-          scrollEnabled={false}
-          data={songs}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
-            <TouchableOpacity style={styles.songItem} onPress={() => openPlayer(item, index)}>
-              <Image source={item.image} style={styles.songImage} />
-              <Text style={styles.songText}>{item.name}</Text>
-            </TouchableOpacity>
-          )}
-        />
-
-      </ScrollView>
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#007bff" />
+      </View>
     );
   }
 
-  const styles = StyleSheet.create({
-    container: {
-      padding: 20,
-      backgroundColor: "#0d0d0d",
-      flex: 1
-    },
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Discover Music</Text>
+      {songs.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No songs found.</Text>
+          <Text style={styles.subText}>Upload songs & wait for approval!</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={songs}
+          keyExtractor={(item) => item._id}
+          renderItem={renderSongItem}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          contentContainerStyle={styles.listContainer}
+        />
+      )}
+    </View>
+  );
+};
 
-    header: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: "#fff",
-      marginBottom: 20,
-    },
+export default HomeScreen;
 
-    sectionTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: "#fff",
-      marginVertical: 12,
-    },
-
-    /* Horizontal Spotify Cards */
-    horizontalCard: {
-      marginRight: 15,
-      backgroundColor: "#1c1c1c",
-      borderRadius: 16,
-      padding: 10,
-      width: 140,
-      alignItems: "center",
-    },
-
-    horizontalImage: {
-      width: 120,
-      height: 120,
-      borderRadius: 12,
-    },
-
-    horizontalText: {
-      color: "#fff",
-      marginTop: 8,
-      fontSize: 14,
-      fontWeight: "500",
-      textAlign: "center",
-    },
-
-    /* List Item (Spotify Style) */
-    songItem: {
-      flexDirection: 'row',
-      padding: 15,
-      backgroundColor: "#1b1b1b",
-      borderRadius: 14,
-      marginBottom: 12,
-      alignItems: 'center',
-    },
-
-    songImage: {
-      width: 60,
-      height: 60,
-      borderRadius: 10,
-    },
-
-    songText: {
-      marginLeft: 15,
-      fontSize: 18,
-      color: "#fff",
-      fontWeight: "500",
-    },
-  });
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingTop: 20,
+    paddingHorizontal: 16,
+  },
+  header: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#333',
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listContainer: {
+    paddingBottom: 20,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+  },
+  card: {
+    width: '48%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    overflow: 'hidden',
+  },
+  cardImageContainer: {
+    height: 120,
+    backgroundColor: '#007bff', // You can change this to a gradient if you add a library, or use random colors
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  cardContent: {
+    padding: 12,
+  },
+  songTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 4,
+  },
+  artistName: {
+    fontSize: 13,
+    color: '#666',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#555',
+  },
+  subText: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 8,
+  },
+});

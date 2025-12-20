@@ -1,155 +1,246 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import SoundPlayer from 'react-native-sound-player';
 import Slider from '@react-native-community/slider';
-import Sound from 'react-native-sound';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
-Sound.setCategory('Playback');
+const BASE_URL = 'http://10.206.215.196:5000';
 
-export default function PlayerScreen({ route, navigation }) {
-    const { song, index, songs } = route.params;
+const PlayerScreen = ({ route, navigation }) => {
+  const { song } = route.params || {};
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [info, setInfo] = useState({ currentTime: 0, duration: 0 });
 
-    const soundRef = useRef(null);
-    const intervalRef = useRef(null);
+  useEffect(() => {
+    if (!song) {
+      Alert.alert('Error', 'No song selected');
+      navigation.goBack();
+      return;
+    }
 
-    const [currentIndex, setCurrentIndex] = useState(index);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [progress, setProgress] = useState(0);
-    const [duration, setDuration] = useState(0);
+    // Subscribe to events
+    const onFinishedLoadingURL = SoundPlayer.addEventListener('FinishedLoadingURL', ({ success, url }) => {
+      setLoading(false);
+      setIsPlaying(success);
+    });
 
-    // Play Song
-    const loadAndPlay = () => {
-        stopSong(() => {
-            const selected = songs[currentIndex];
+    const onFinishedPlaying = SoundPlayer.addEventListener('FinishedPlaying', ({ success }) => {
+      setIsPlaying(false);
+      SoundPlayer.seek(0); // Reset to start
+    });
 
-            const sound = new Sound(selected.file, Sound.MAIN_BUNDLE, (err) => {
-                if (err) return;
+    // Start playing
+    try {
+      const streamUrl = `${BASE_URL}/api/song/stream/${song.fileId}`;
+      SoundPlayer.playUrl(streamUrl);
+      setLoading(true);
+    } catch (e) {
+      Alert.alert('Error', 'Cannot play this song');
+      console.log('cannot play the song file', e);
+      setLoading(false);
+    }
 
-                soundRef.current = sound;
-                setDuration(sound.getDuration());
-                setIsPlaying(true);
-
-                sound.play(() => nextSong());
-            });
-
-            startTimer();
-        });
-    };
-
-    // Timer
-    const startTimer = () => {
-        if (intervalRef.current) clearInterval(intervalRef.current);
-
-        intervalRef.current = setInterval(() => {
-            if (soundRef.current && isPlaying) {
-                soundRef.current.getCurrentTime(sec => setProgress(sec));
-            }
-        }, 500);
-    };
-
-    // Stop Song
-    const stopSong = (cb) => {
-        if (soundRef.current) {
-            soundRef.current.stop(() => {
-                soundRef.current.release();
-                soundRef.current = null;
-                setProgress(0);
-
-                cb && cb();
-            });
-        } else cb && cb();
-    };
-
-    // Play / Pause
-    const togglePlay = () => {
-        if (!soundRef.current) return loadAndPlay();
-
-        if (isPlaying) {
-            soundRef.current.pause();
-            setIsPlaying(false);
-        } else {
-            soundRef.current.play();
-            setIsPlaying(true);
+    // Get Info Loop (for slider)
+    const interval = setInterval(async () => {
+      try {
+        const info = await SoundPlayer.getInfo();
+        if (info) {
+          setInfo({
+            currentTime: info.currentTime,
+            duration: info.duration
+          });
         }
+      } catch (e) {
+        // console.log('getError', e);
+      }
+    }, 1000);
+
+    return () => {
+      onFinishedLoadingURL.remove();
+      onFinishedPlaying.remove();
+      try {
+        SoundPlayer.stop();
+      } catch (e) { }
+      clearInterval(interval);
     };
+  }, [song]);
 
-    // Next Song
-    const nextSong = () => {
-        let next = currentIndex + 1;
-        if (next >= songs.length) next = 0;
-        setCurrentIndex(next);
-    };
+  const togglePlayPause = () => {
+    try {
+      if (isPlaying) {
+        SoundPlayer.pause();
+        setIsPlaying(false);
+      } else {
+        SoundPlayer.resume();
+        setIsPlaying(true);
+      }
+    } catch (e) {
+      console.log('Create Error', e);
+    }
+  };
 
-    // Previous Song
-    const prevSong = () => {
-        let prev = currentIndex - 1;
-        if (prev < 0) prev = songs.length - 1;
-        setCurrentIndex(prev);
-    };
+  const formatTime = (seconds) => {
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60);
+    return `${min}:${sec < 10 ? '0' + sec : sec}`;
+  };
 
-    // Seek
-    const seek = (value) => {
-        if (soundRef.current) {
-            soundRef.current.setCurrentTime(value);
-            setProgress(value);
-        }
-    };
+  if (!song) return null;
 
-    // Convert Time
-    const time = (sec) => {
-        const m = Math.floor(sec / 60);
-        const s = Math.floor(sec % 60);
-        return `${m}:${s < 10 ? '0' + s : s}`;
-    };
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-down" size={30} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Now Playing</Text>
+        <Ionicons name="ellipsis-horizontal" size={30} color="#333" />
+      </View>
 
-    useEffect(() => {
-        loadAndPlay();
-        return () => stopSong();
-    }, [currentIndex]);
-
-    const currentSong = songs[currentIndex];
-
-    return (
-        <View style={styles.container}>
-
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-                <Text style={styles.back}>⬅ Back</Text>
-            </TouchableOpacity>
-
-            <Image source={currentSong.image} style={styles.cover} />
-
-            <Text style={styles.title}>{currentSong.name}</Text>
-
-            <Slider
-                value={progress}
-                minimumValue={0}
-                maximumValue={duration}
-                onSlidingComplete={seek}
-                minimumTrackTintColor="#ff7043"
-                maximumTrackTintColor="#ddd"
-                thumbTintColor="#ff7043"
-            />
-
-            <View style={styles.timeRow}>
-                <Text>{time(progress)}</Text>
-                <Text>{time(duration)}</Text>
-            </View>
-
-            <View style={styles.controls}>
-                <TouchableOpacity onPress={prevSong}><Text style={styles.btn}>⏮</Text></TouchableOpacity>
-                <TouchableOpacity onPress={togglePlay}><Text style={styles.btn}>{isPlaying ? "⏸" : "▶️"}</Text></TouchableOpacity>
-                <TouchableOpacity onPress={nextSong}><Text style={styles.btn}>⏭</Text></TouchableOpacity>
-            </View>
-
+      {/* Album Art Placeholder */}
+      <View style={styles.artworkContainer}>
+        <View style={styles.artwork}>
+          <Ionicons name="musical-notes" size={80} color="#fff" />
         </View>
-    );
-}
+      </View>
+
+      {/* Song Info */}
+      <View style={styles.infoContainer}>
+        <Text style={styles.title} numberOfLines={1}>{song.title}</Text>
+        <Text style={styles.artist} numberOfLines={1}>{song.artist}</Text>
+      </View>
+
+      {/* Slider */}
+      <View style={styles.sliderContainer}>
+        <Slider
+          style={styles.slider}
+          minimumValue={0}
+          maximumValue={info.duration || 1}
+          value={info.currentTime}
+          minimumTrackTintColor="#007bff"
+          maximumTrackTintColor="#ccc"
+          thumbTintColor="#007bff"
+          onSlidingComplete={(val) => SoundPlayer.seek(val)}
+        />
+        <View style={styles.timeContainer}>
+          <Text style={styles.timeText}>{formatTime(info.currentTime)}</Text>
+          <Text style={styles.timeText}>{formatTime(info.duration)}</Text>
+        </View>
+      </View>
+
+      {/* Controls */}
+      <View style={styles.controlsContainer}>
+        <TouchableOpacity>
+          <Ionicons name="play-skip-back" size={35} color="#333" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.playButton} onPress={togglePlayPause} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#fff" size="large" />
+          ) : (
+            <Ionicons name={isPlaying ? "pause" : "play"} size={40} color="#fff" />
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity>
+          <Ionicons name="play-skip-forward" size={35} color="#333" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default PlayerScreen;
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#fff", padding: 20 },
-    back: { fontSize: 18, marginBottom: 10 },
-    cover: { width: "100%", height: 300, borderRadius: 20 },
-    title: { fontSize: 24, fontWeight: 'bold', marginVertical: 20, textAlign: "center" },
-    timeRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 5 },
-    controls: { flexDirection: "row", justifyContent: "space-around", marginTop: 30 },
-    btn: { fontSize: 32, padding: 10 },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  artworkContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  artwork: {
+    width: 250,
+    height: 250,
+    borderRadius: 20,
+    backgroundColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  infoContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+    textAlign: 'center',
+  },
+  artist: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+  },
+  sliderContainer: {
+    marginBottom: 20,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+  },
+  timeText: {
+    fontSize: 12,
+    color: '#888',
+  },
+  controlsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  playButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#007bff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+  },
 });

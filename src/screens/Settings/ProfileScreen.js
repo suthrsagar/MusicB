@@ -16,7 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { launchImageLibrary } from 'react-native-image-picker';
 
-const BASE_URL = 'http://10.203.126.196:5000';
+const BASE_URL = 'http://10.206.215.196:5000';
 const API_URL = `${BASE_URL}/api`;
 
 const ProfileScreen = ({ navigation }) => {
@@ -46,13 +46,13 @@ const ProfileScreen = ({ navigation }) => {
     const init = async () => {
       const token = await AsyncStorage.getItem('token');
       if (token) {
-        setIsLoggedIn(true);
+        setIsLoggedIn(true); // Token exists, so we are logged in
         await fetchProfile();
       }
       setLoading(false);
     };
     init();
-  }, []);
+  }, []); // Run only once on mount
 
   // 📸 Permission
   const requestPermission = async () => {
@@ -107,14 +107,18 @@ const ProfileScreen = ({ navigation }) => {
       });
 
       await api.post('/profile/photo', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'x-auth-token': loginRes.data.token
+        },
       });
 
-      setIsLoggedIn(true);
-      await fetchProfile();
-      resetForm();
+      // Navigate to Home/Tabs instead of just setting state
       Alert.alert('Success', 'Account created and photo uploaded');
+      navigation.replace('Tabs');
+
     } catch (err) {
+      console.error(err);
       Alert.alert('Error', err.response?.data?.msg || 'Registration failed');
     } finally {
       setBtnLoading(false);
@@ -132,8 +136,10 @@ const ProfileScreen = ({ navigation }) => {
     try {
       const res = await api.post('/login', { email, password });
       await AsyncStorage.setItem('token', res.data.token);
-      setIsLoggedIn(true);
-      await fetchProfile();
+
+      // Navigate to Home/Tabs
+      navigation.replace('Tabs');
+
     } catch {
       Alert.alert('Login failed');
     } finally {
@@ -157,6 +163,12 @@ const ProfileScreen = ({ navigation }) => {
     setIsLoggedIn(false);
     setProfile(null);
     resetForm();
+
+    // Redirect to Login Screen
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'LoginProfile' }],
+    });
   };
 
   const resetForm = () => {
@@ -207,6 +219,7 @@ const ProfileScreen = ({ navigation }) => {
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
+          autoCapitalize="none"
         />
         <TextInput
           style={styles.input}
@@ -263,15 +276,27 @@ const ProfileScreen = ({ navigation }) => {
           <Text style={styles.info}>Username: {profile.username}</Text>
           <Text style={styles.info}>Email: {profile.email}</Text>
         </View>
-      )}
+      )
+      }
+
+      {
+        profile && profile.role === 'admin' && (
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#FFC107', marginBottom: 20 }]}
+            onPress={() => navigation.navigate('AdminDashboard')}
+          >
+            <Text style={[styles.btnText, { color: '#000' }]}>Admin Panel</Text>
+          </TouchableOpacity>
+        )
+      }
 
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#ef4444' }]}
+        style={[styles.button, { backgroundColor: '#080808ff' }]}
         onPress={handleLogout}
       >
         <Text style={styles.btnText}>Logout</Text>
       </TouchableOpacity>
-    </ScrollView>
+    </ScrollView >
   );
 };
 
@@ -282,7 +307,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   title: { fontSize: 26, fontWeight: '700', textAlign: 'center', marginBottom: 20 },
   input: { borderWidth: 1, borderRadius: 10, padding: 14, marginBottom: 15 },
-  button: { backgroundColor: '#4f46e5', padding: 15, borderRadius: 10, alignItems: 'center' },
+  button: { backgroundColor: '#4f46e5', padding: 15, borderRadius: 10, alignItems: 'center', },
   btnText: { color: '#fff', fontWeight: '600' },
   link: { textAlign: 'center', marginTop: 15, color: '#2563eb' },
   card: { alignItems: 'center', marginBottom: 20 },

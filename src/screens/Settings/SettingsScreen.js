@@ -1,98 +1,64 @@
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SettingsScreen = ({ navigation }) => {
+
+  const handleUploadPress = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        navigation.navigate('SongUploadScreen');
+      } else {
+        Alert.alert(
+          'Login Required',
+          'You must be logged in to upload songs.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Login', onPress: () => navigation.navigate('ProfileScreen') }
+          ]
+        );
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
-    <View>
-      <Text style={styles.text} >Account</Text>
-      <TouchableOpacity
-        style={styles.btn}
-        onPress={() => navigation.navigate('ProfileScreen')}
-        options={{
-          heddershow: false,
-        }} >
-        <Text style={styles.btn}>Profile Settings</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
+    <View style={styles.container}>
 
-        style={styles.btn}
-        onPress={() => navigation.navigate('UserProfileById')}
-        options={{
-          heddershow: false,
-        }} >
-        <Text style={styles.btn}>User Profile</Text>
-      </TouchableOpacity>
       <TouchableOpacity
         style={styles.btn}
+        onPress={handleUploadPress}
       >
-        <Text style={styles.btn}>Privacy Settings</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.btn}
-      >
-        <Text style={styles.btn}>Upload Songs</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.text} >About</Text>
-      <TouchableOpacity
-        style={styles.btn}
-      >
-        <Text style={styles.btn}>Version 1.0.0</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.btn}
-      >
-        <Text style={styles.btn}>Rate Us</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.btn}
-      >
-        <Text style={styles.btn}>Share App</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.btn}
-      >
-        <Text style={styles.btn}>Deveploer
-          <Text style={styles.name}> ( "Sagar Jangid" )</Text></Text>
+        <Text style={styles.btnText}>Upload Songs</Text>
       </TouchableOpacity>
 
     </View>
-  )
-}
+  );
+};
 
-export default SettingsScreen
+export default SettingsScreen;
 
 const styles = StyleSheet.create({
-  text: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#000',
-    marginTop: 20,
-    marginLeft: 10
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
   },
   btn: {
-    fontSize: 15,
-    color: '#000',
-    marginTop: 10,
-    marginLeft: 10,
     backgroundColor: '#e2dedeff',
-
-    paddingVertical: 5,
+    paddingVertical: 15,
     borderRadius: 10,
-    width: 370,
-    height: 50,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 10,
-
-
-
-  },
-  name: {
-    fontSize: 15,
-    color: '#ff0404ce',
+    marginBottom: 20,
     marginTop: 10,
-    marginLeft: 40,
-
-  }
-})
+  },
+  btnText: {
+    fontSize: 16,
+    color: '#000',
+    fontWeight: '600',
+  },
+});
