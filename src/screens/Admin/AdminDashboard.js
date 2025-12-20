@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert, ScrollView, StatusBar } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { theme } from '../../theme';
 
 const BASE_URL = 'http://10.206.215.196:5000';
 
@@ -36,16 +37,18 @@ const AdminDashboard = () => {
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" color="#007bff" />
+                <ActivityIndicator size="large" color={theme.colors.primary} />
             </View>
         );
     }
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back" size={24} color="#333" />
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Admin Dashboard</Text>
                 <View style={{ width: 24 }} />
@@ -53,32 +56,64 @@ const AdminDashboard = () => {
 
             <View style={styles.statsContainer}>
                 <View style={styles.statCard}>
+                    <View style={[styles.statIconBox, { backgroundColor: 'rgba(67, 24, 255, 0.1)' }]}>
+                        <Ionicons name="people" size={24} color={theme.colors.primary} />
+                    </View>
                     <Text style={styles.statNumber}>{stats.users}</Text>
                     <Text style={styles.statLabel}>Total Users</Text>
                 </View>
                 <View style={styles.statCard}>
-                    <Text style={styles.statNumber}>{stats.songs}</Text>
+                    <View style={[styles.statIconBox, { backgroundColor: 'rgba(5, 205, 153, 0.1)' }]}>
+                        <Ionicons name="musical-notes" size={24} color={theme.colors.success} />
+                    </View>
+                    <Text style={[styles.statNumber, { color: theme.colors.success }]}>{stats.songs}</Text>
                     <Text style={styles.statLabel}>Total Songs</Text>
                 </View>
             </View>
+
+            <Text style={styles.sectionHeader}>Management Actions</Text>
 
             <View style={styles.menuContainer}>
                 <TouchableOpacity
                     style={styles.menuItem}
                     onPress={() => navigation.navigate('ManageUsers')}
                 >
-                    <Ionicons name="people" size={30} color="#fff" />
-                    <Text style={styles.menuText}>Manage Users</Text>
-                    <Ionicons name="chevron-forward" size={24} color="#ddd" />
+                    <View style={[styles.menuIconBox, { backgroundColor: 'rgba(67, 24, 255, 0.1)' }]}>
+                        <Ionicons name="people-circle-outline" size={28} color={theme.colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.menuText}>Manage Users</Text>
+                        <Text style={styles.menuSubText}>View, ban, or unban users</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.menuItem, { backgroundColor: '#dc3545' }]}
+                    style={styles.menuItem}
                     onPress={() => navigation.navigate('ManageSongs')}
                 >
-                    <Ionicons name="musical-notes" size={30} color="#fff" />
-                    <Text style={styles.menuText}>Manage Songs</Text>
-                    <Ionicons name="chevron-forward" size={24} color="#ddd" />
+                    <View style={[styles.menuIconBox, { backgroundColor: 'rgba(255, 86, 48, 0.1)' }]}>
+                        <Ionicons name="musical-note-outline" size={28} color={theme.colors.error} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.menuText}>Manage Songs</Text>
+                        <Text style={styles.menuSubText}>Approve pending or delete songs</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => navigation.navigate('SendNotification')}
+                >
+                    <View style={[styles.menuIconBox, { backgroundColor: 'rgba(255, 193, 7, 0.1)' }]}>
+                        <Ionicons name="notifications-outline" size={28} color="#FFC107" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.menuText}>Send Notifications</Text>
+                        <Text style={styles.menuSubText}>Broadcast updates to all users</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
             </View>
         </ScrollView>
@@ -90,65 +125,95 @@ export default AdminDashboard;
 const styles = StyleSheet.create({
     container: {
         flexGrow: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: theme.colors.background,
         padding: 20,
     },
     center: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: theme.colors.background,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 30,
+        marginTop: 10,
     },
     headerTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#333',
+        ...theme.typography.header,
+        color: theme.colors.text,
+        fontSize: 20,
+    },
+    backButton: {
+        padding: 5,
     },
     statsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 30,
+        marginBottom: 40,
     },
     statCard: {
         width: '48%',
-        backgroundColor: '#fff',
+        backgroundColor: theme.colors.surface,
         padding: 20,
-        borderRadius: 10,
+        borderRadius: 20,
+        ...theme.shadows.medium,
+        alignItems: 'flex-start',
+    },
+    statIconBox: {
+        width: 45,
+        height: 45,
+        borderRadius: 12,
+        justifyContent: 'center',
         alignItems: 'center',
-        elevation: 3,
+        marginBottom: 15,
     },
     statNumber: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#007bff',
+        fontSize: 28,
+        fontWeight: '800',
+        color: theme.colors.primary,
+        marginBottom: 5,
     },
     statLabel: {
         fontSize: 14,
-        color: '#666',
-        marginTop: 5,
+        color: theme.colors.textSecondary,
+    },
+    sectionHeader: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: theme.colors.text,
+        marginBottom: 15,
     },
     menuContainer: {
-        marginTop: 10,
+        paddingBottom: 20,
     },
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#28a745',
+        backgroundColor: theme.colors.surface,
         padding: 20,
-        borderRadius: 12,
-        marginBottom: 15,
-        elevation: 3,
+        borderRadius: 16,
+        marginBottom: 20,
+        ...theme.shadows.soft,
+    },
+    menuIconBox: {
+        width: 50,
+        height: 50,
+        borderRadius: 15,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 15,
     },
     menuText: {
-        flex: 1,
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#fff',
-        marginLeft: 15,
+        fontSize: 16,
+        fontWeight: '700',
+        color: theme.colors.text,
+    },
+    menuSubText: {
+        fontSize: 12,
+        color: theme.colors.textSecondary,
+        marginTop: 3,
     },
 });

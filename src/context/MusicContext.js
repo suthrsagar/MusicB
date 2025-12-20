@@ -1,0 +1,218 @@
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
+import SoundPlayer from 'react-native-sound-player';
+import { Alert } from 'react-native';
+
+const MusicContext = createContext();
+
+const BASE_URL = 'http://10.206.215.196:5000';
+
+export const MusicProvider = ({ children }) => {
+    const [currentSong, setCurrentSong] = useState(null);
+    const [queue, setQueue] = useState([]);
+    const [currentIndex, setCurrentIndex] = useState(-1);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [progress, setProgress] = useState({ position: 0, duration: 0 });
+
+    const queueRef = useRef([]);
+    const currentIndexRef = useRef(-1);
+
+    // Keep refs detailed synced with state
+    useEffect(() => {
+        queueRef.current = queue;
+        currentIndexRef.current = currentIndex;
+    }, [queue, currentIndex]);
+
+    useEffect(() => {
+        // Subscribe to events
+        const onFinishedLoadingURL = SoundPlayer.addEventListener('FinishedLoadingURL', ({ success, url }) => {
+            setLoading(false);
+            if (success) {
+                setIsPlaying(true);
+            }
+        });
+
+        const onFinishedPlaying = SoundPlayer.addEventListener('FinishedPlaying', ({ success }) => {
+            setIsPlaying(false);
+            // Auto-Next Logic with delay for stability
+            // Use internal function to access latest state via refs
+            setTimeout(() => {
+                playNextInternal();
+            }, 500);
+        });
+
+        // Loop for progress
+        const interval = setInterval(async () => {
+            if (isPlaying) {
+                try {
+                    const info = await SoundPlayer.getInfo();
+                    if (info) {
+                        setProgress({ position: info.currentTime, duration: info.duration });
+                    }
+                } catch (e) { }
+            }
+        }, 1000);
+
+        return () => {
+            onFinishedLoadingURL.remove();
+            onFinishedPlaying.remove();
+            clearInterval(interval);
+        };
+    }, [isPlaying]); // Minimized dependencies for listeners
+
+    const playSong = async (song, playlistList = []) => {
+        try {
+            setLoading(true);
+            setCurrentSong(song);
+
+            // If a playlist is passed, set queue.
+            if (playlistList.length > 0) {
+                setQueue(playlistList);
+                const newIndex = playlistList.findIndex(s => s.fileId === song.fileId);
+                setCurrentIndex(newIndex !== -1 ? newIndex : 0);
+            } else {
+                setQueue([song]);
+                setCurrentIndex(0);
+            }
+
+            const streamUrl = `${BASE_URL}/api/song/stream/${song.fileId}`;
+
+            // Ensure stop before play (helps with robustness)
+            try { SoundPlayer.stop(); } catch (e) { }
+
+            // Specific delay for Android sometimes needed
+            setTimeout(() => {
+                SoundPlayer.playUrl(streamUrl);
+            }, 100);
+
+        } catch (e) {
+            console.error(e);
+            Alert.alert('Error', 'Cannot play this song');
+            setLoading(false);
+            setIsPlaying(false);
+        }
+    };
+
+    const playNextInternal = async () => {
+        const currentQueue = queueRef.current;
+        const currentIdx = currentIndexRef.current;
+
+        if (currentQueue.length === 0) return;
+
+        let nextIndex = currentIdx + 1;
+
+        // Loop: If end of queue, go to 0
+        if (nextIndex >= currentQueue.length) {
+            nextIndex = 0;
+        }
+
+        const nextSong = currentQueue[nextIndex];
+
+        // Update State
+        setCurrentIndex(nextIndex);
+        setCurrentSong(nextSong);
+        setLoading(true);
+
+        try {
+            const streamUrl = `${BASE_URL}/api/song/stream/${nextSong.fileId}`;
+            try { SoundPlayer.stop(); } catch (e) { }
+            setTimeout(() => {
+                SoundPlayer.playUrl(streamUrl);
+            }, 100);
+        } catch (e) {
+            console.log("Error playing next", e);
+            setLoading(false);
+        }
+    };
+
+    const playNext = () => playNextInternal();
+
+    const playPrev = async () => {
+        const currentQueue = queueRef.current; // Use Ref for reliability
+        const currentIdx = currentIndexRef.current;
+
+        if (currentQueue.length === 0) return;
+
+        // Smart Previous: Restart if played > 3s
+        try {
+            const info = await SoundPlayer.getInfo();
+            if (info && info.currentTime > 3) {
+                SoundPlayer.seek(0);
+                return;
+            }
+        } catch (e) { }
+
+        let prevIndex = currentIdx - 1;
+        if (prevIndex < 0) {
+            prevIndex = currentQueue.length - 1; // Loop to end
+        }
+
+        const prevSong = currentQueue[prevIndex];
+
+        setCurrentIndex(prevIndex);
+        setCurrentSong(prevSong);
+        setLoading(true);
+
+        try {
+            const streamUrl = `${BASE_URL}/api/song/stream/${prevSong.fileId}`;
+            try { SoundPlayer.stop(); } catch (e) { }
+            setTimeout(() => {
+                SoundPlayer.playUrl(streamUrl);
+            }, 100);
+        } catch (e) {
+            console.log("Error playing prev", e);
+            setLoading(false);
+        }
+    };
+
+    const togglePlayPause = () => {
+        if (!currentSong) return;
+
+        try {
+            if (isPlaying) {
+                SoundPlayer.pause();
+                setIsPlaying(false);
+            } else {
+                SoundPlayer.resume();
+                setIsPlaying(true);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const seekTo = (seconds) => {
+        try {
+            SoundPlayer.seek(seconds);
+        } catch (e) { console.error(e); }
+    };
+
+    const closePlayer = () => {
+        try {
+            SoundPlayer.stop();
+            setIsPlaying(false);
+            setCurrentSong(null);
+            setQueue([]);
+            setCurrentIndex(-1);
+        } catch (e) { }
+    };
+
+    return (
+        <MusicContext.Provider value={{
+            currentSong,
+            isPlaying,
+            loading,
+            progress,
+            playSong,
+            playNext,
+            playPrev,
+            togglePlayPause,
+            seekTo,
+            closePlayer
+        }}>
+            {children}
+        </MusicContext.Provider>
+    );
+};
+
+export const useMusic = () => useContext(MusicContext);

@@ -8,11 +8,14 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  StatusBar
 } from 'react-native';
-import { pick, types, isCancel } from '@react-native-documents/picker'; // Corrected import
+import { pick, types, isCancel } from '@react-native-documents/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { theme } from '../../theme';
 
 const SongUploadScreen = () => {
   const navigation = useNavigation();
@@ -24,7 +27,6 @@ const SongUploadScreen = () => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Check for User Token on Mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -33,7 +35,7 @@ const SongUploadScreen = () => {
           Alert.alert(
             'Authentication Error',
             'You need to be logged in to upload songs.',
-            [{ text: 'Go to Login', onPress: () => navigation.navigate('ProfileScreen') }]
+            [{ text: 'Go to Login', onPress: () => navigation.navigate('Profile') }]
           );
         }
       } catch (error) {
@@ -43,21 +45,16 @@ const SongUploadScreen = () => {
     checkAuth();
   }, [navigation]);
 
-  // Pick Audio File
   const handlePickDocument = async () => {
     try {
-      // Use the named export 'pick' directly
       const result = await pick({
         type: [types.audio],
         allowMultiSelection: false,
       });
 
-      // result is an array
       const pickedFile = result[0];
       setFile(pickedFile);
 
-      // Auto-fill Title from filename if empty
-      // Example: "MySong.mp3" -> "MySong"
       if (!title && pickedFile.name) {
         const nameWithoutExt = pickedFile.name.lastIndexOf('.') > 0
           ? pickedFile.name.substring(0, pickedFile.name.lastIndexOf('.'))
@@ -73,7 +70,6 @@ const SongUploadScreen = () => {
     }
   };
 
-  // Upload Song
   const handleUpload = async () => {
     if (!file) {
       Alert.alert('Validation Error', 'Please pick an audio file.');
@@ -89,13 +85,12 @@ const SongUploadScreen = () => {
       const token = await AsyncStorage.getItem('token');
       if (!token) {
         Alert.alert('Error', 'User not authenticated. Please login.');
-        navigation.navigate('ProfileScreen');
+        navigation.navigate('Profile');
         setLoading(false);
         return;
       }
 
       const formData = new FormData();
-      // Field name must match backend multer config (router.post(..., upload.single('song')))
       formData.append('song', {
         uri: file.uri,
         name: file.name,
@@ -122,20 +117,6 @@ const SongUploadScreen = () => {
       }
     } catch (error) {
       console.error('Upload Error:', error);
-
-      if (error.response && (error.response.status === 401 || error.response.data?.msg === 'Token is not valid')) {
-        Alert.alert('Session Expired', 'Your session has expired. Please login again.', [
-          {
-            text: 'OK',
-            onPress: async () => {
-              await AsyncStorage.removeItem('token');
-              navigation.navigate('ProfileScreen');
-            }
-          }
-        ]);
-        return;
-      }
-
       const msg = error.response?.data?.msg || error.message || 'Something went wrong';
       Alert.alert('Upload Error', msg);
     } finally {
@@ -153,25 +134,26 @@ const SongUploadScreen = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Upload New Song</Text>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
-      {/* File Picker Section */}
-      <TouchableOpacity style={styles.pickButton} onPress={handlePickDocument}>
-        <Text style={styles.buttonText}>
-          {file ? `Selected: ${file.name}` : 'Pick Audio File'}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Upload Content</Text>
+      </View>
 
-      {/* Form Inputs */}
-      <View style={styles.formContainer}>
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Song Information</Text>
+
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Song Title *</Text>
           <TextInput
             style={styles.input}
             value={title}
             onChangeText={setTitle}
-            placeholder="Enter Song Title"
-            placeholderTextColor="#999"
+            placeholder="e.g. Summer Vibes"
+            placeholderTextColor={theme.colors.textSecondary}
           />
         </View>
 
@@ -181,102 +163,95 @@ const SongUploadScreen = () => {
             style={styles.input}
             value={artist}
             onChangeText={setArtist}
-            placeholder="Enter Artist Name"
-            placeholderTextColor="#999"
+            placeholder="e.g. John Doe"
+            placeholderTextColor={theme.colors.textSecondary}
           />
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Album (Optional)</Text>
-          <TextInput
-            style={styles.input}
-            value={album}
-            onChangeText={setAlbum}
-            placeholder="Enter Album Name"
-            placeholderTextColor="#999"
-          />
+        <View style={styles.row}>
+          <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+            <Text style={styles.label}>Album (Opt)</Text>
+            <TextInput
+              style={styles.input}
+              value={album}
+              onChangeText={setAlbum}
+              placeholder="e.g. Hits"
+              placeholderTextColor={theme.colors.textSecondary}
+            />
+          </View>
+          <View style={[styles.inputGroup, { flex: 1 }]}>
+            <Text style={styles.label}>Genre (Opt)</Text>
+            <TextInput
+              style={styles.input}
+              value={genre}
+              onChangeText={setGenre}
+              placeholder="e.g. Pop"
+              placeholderTextColor={theme.colors.textSecondary}
+            />
+          </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Genre (Optional)</Text>
-          <TextInput
-            style={styles.input}
-            value={genre}
-            onChangeText={setGenre}
-            placeholder="Enter Genre"
-            placeholderTextColor="#999"
-          />
-        </View>
-      </View>
-
-      {/* Upload Button */}
-      {loading ? (
-        <ActivityIndicator size="large" color="#007bff" style={styles.loader} />
-      ) : (
-        <TouchableOpacity
-          style={[
-            styles.uploadButton,
-            (!file || !title || !artist) && styles.disabledButton,
-          ]}
-          onPress={handleUpload}
-          disabled={!file || !title || !artist}
-        >
-          <Text style={styles.buttonText}>Upload Song</Text>
+        <Text style={styles.sectionTitle}>Audio File</Text>
+        <TouchableOpacity style={styles.pickButton} onPress={handlePickDocument}>
+          <Ionicons name={file ? "checkmark-circle" : "musical-note"} size={24} color={file ? theme.colors.success : theme.colors.primary} />
+          <Text style={[styles.pickButtonText, file && { color: theme.colors.success }]}>
+            {file ? file.name : 'Choose Audio File'}
+          </Text>
         </TouchableOpacity>
-      )}
+
+        {loading ? (
+          <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.uploadButton,
+              (!file || !title || !artist) && styles.disabledButton,
+            ]}
+            onPress={handleUpload}
+            disabled={!file || !title || !artist}
+          >
+            <Text style={styles.uploadButtonText}>Upload Song</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </ScrollView>
   );
 };
+
+export default SongUploadScreen;
 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
     flexGrow: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
-  header: {
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  backButton: {
+    marginRight: 15,
+  },
+  headerTitle: {
+    ...theme.typography.header,
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 30,
-    marginTop: 10,
+    color: theme.colors.text,
   },
-  pickButton: {
-    backgroundColor: '#28a745',
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 25,
-    elevation: 3, // Shadow for Android
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+  card: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.layout.borderRadius,
+    padding: 20,
+    ...theme.shadows.medium,
   },
-  uploadButton: {
-    backgroundColor: '#007bff',
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-  },
-  disabledButton: {
-    backgroundColor: '#a0a0a0',
-    elevation: 0,
-  },
-  buttonText: {
-    color: '#fff',
+  sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-  },
-  formContainer: {
-    marginBottom: 10,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 15,
+    marginTop: 10,
   },
   inputGroup: {
     marginBottom: 15,
@@ -284,21 +259,54 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 6,
-    color: '#555',
+    marginBottom: 8,
+    color: theme.colors.textSecondary,
   },
   input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: theme.colors.inputBackground, // Light grey/blue background for input
+    borderRadius: 12,
+    padding: 15,
     fontSize: 16,
-    color: '#333',
+    color: theme.colors.text,
+    borderWidth: 1,
+    borderColor: 'transparent', // No border by default
   },
-  loader: {
-    marginTop: 20,
+  row: {
+    flexDirection: 'row',
+  },
+  pickButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderStyle: 'dashed',
+    marginBottom: 20,
+    backgroundColor: '#F4F7FE',
+  },
+  pickButtonText: {
+    marginLeft: 10,
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.primary,
+  },
+  uploadButton: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+    ...theme.shadows.medium,
+  },
+  disabledButton: {
+    backgroundColor: theme.colors.textSecondary,
+    opacity: 0.5,
+  },
+  uploadButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
-
-export default SongUploadScreen;

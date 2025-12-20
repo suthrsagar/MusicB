@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, StatusBar } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { theme } from '../../theme';
 
 const BASE_URL = 'http://10.206.215.196:5000';
 
@@ -53,47 +54,57 @@ export default function SearchScreen() {
       onPress={() => navigation.navigate('PlayerScreen', { song: item })}
     >
       <View style={styles.iconContainer}>
-        <Ionicons name="search" size={20} color="#fff" />
+        <Ionicons name="musical-notes-outline" size={24} color={theme.colors.primary} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.songTitle} numberOfLines={1}>{item.title}</Text>
         <Text style={styles.artist} numberOfLines={1}>{item.artist}</Text>
       </View>
-      <Ionicons name="play-circle-outline" size={28} color="#007bff" />
+      <View style={styles.playIcon}>
+        <Ionicons name="play" size={20} color="#fff" />
+      </View>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+
+      <Text style={styles.header}>Search</Text>
+
       {/* Search Bar */}
       <View style={styles.searchBarContainer}>
-        <Ionicons name="search-outline" size={20} color="#888" style={styles.searchIcon} />
+        <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
         <TextInput
           style={styles.input}
-          placeholder="Search songs or artists..."
-          placeholderTextColor="#888"
+          placeholder="Search songs, artists..."
+          placeholderTextColor={theme.colors.textSecondary}
           value={query}
           onChangeText={setQuery}
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => setQuery('')}>
-            <Ionicons name="close-circle" size={20} color="#888" />
+            <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
         )}
       </View>
 
       {/* Songs List */}
       {loading ? (
-        <ActivityIndicator size="large" color="#007bff" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />
       ) : (
         <FlatList
           data={filteredSongs}
           keyExtractor={(item) => item._id}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.noResult}>
-              <Text style={{ color: '#6B7280' }}>No songs found matching "{query}"</Text>
+              <Ionicons name="search" size={50} color={theme.colors.border} />
+              <Text style={{ color: theme.colors.textSecondary, marginTop: 10 }}>
+                No results found for "{query}"
+              </Text>
             </View>
           }
         />
@@ -105,66 +116,71 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
-    padding: 20,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: 20,
+    paddingTop: 10,
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 15,
+    ...theme.typography.header,
+    color: theme.colors.text,
+    marginBottom: 20,
+    marginTop: 10,
   },
   searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    elevation: 2,
+    marginBottom: 20,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.layout.borderRadius,
+    paddingHorizontal: 15,
+    height: 50,
+    ...theme.shadows.soft,
   },
   searchIcon: {
     marginRight: 10,
   },
   input: {
     flex: 1,
-    paddingVertical: 12,
+    height: '100%',
     fontSize: 16,
-    color: '#333',
+    color: theme.colors.text,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginVertical: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    padding: 15,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.layout.borderRadius,
+    marginBottom: 15,
+    ...theme.shadows.soft,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#28a745',
+    width: 45,
+    height: 45,
+    borderRadius: 12,
+    backgroundColor: theme.colors.inputBackground,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
   },
   songTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: '700',
+    color: theme.colors.text,
   },
   artist: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 13,
+    color: theme.colors.textSecondary,
     marginTop: 2,
+    fontWeight: '500',
+  },
+  playIcon: {
+    width: 35,
+    height: 35,
+    borderRadius: 17.5,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   noResult: {
     flex: 1,

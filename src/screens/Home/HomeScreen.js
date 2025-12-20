@@ -7,16 +7,20 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Image,
+  StatusBar,
 } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { theme } from '../../theme';
 
 const BASE_URL = 'http://10.206.215.196:5000';
 
+import { useMusic } from '../../context/MusicContext';
+
 const HomeScreen = () => {
   const navigation = useNavigation();
+  const { playSong } = useMusic();
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -37,7 +41,7 @@ const HomeScreen = () => {
     fetchSongs();
   }, []);
 
-  // Reload songs whenever the screen comes into focus (e.g., after upload)
+  // Reload songs whenever the screen comes into focus
   useFocusEffect(
     useCallback(() => {
       fetchSongs();
@@ -52,8 +56,11 @@ const HomeScreen = () => {
   const renderSongItem = ({ item }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => navigation.navigate('PlayerScreen', { song: item })}
-      activeOpacity={0.8}
+      onPress={() => {
+        playSong(item, songs); // Pass current list as queue
+        navigation.navigate('PlayerScreen', { song: item, playlist: songs });
+      }}
+      activeOpacity={0.9}
     >
       <View style={styles.cardImageContainer}>
         <Ionicons name="musical-notes" size={40} color="#fff" />
@@ -63,8 +70,11 @@ const HomeScreen = () => {
           {item.title}
         </Text>
         <Text style={styles.artistName} numberOfLines={1}>
-          {item.artist}
+          {item.artist || 'Unknown Artist'}
         </Text>
+      </View>
+      <View style={styles.playIconOverlay}>
+        <Ionicons name="play-circle" size={30} color={theme.colors.primary} />
       </View>
     </TouchableOpacity>
   );
@@ -72,16 +82,18 @@ const HomeScreen = () => {
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#007bff" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Discover Music</Text>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      <Text style={styles.header}>Discover</Text>
       {songs.length === 0 ? (
         <View style={styles.emptyContainer}>
+          <Ionicons name="musical-note-outline" size={60} color={theme.colors.textSecondary} />
           <Text style={styles.emptyText}>No songs found.</Text>
           <Text style={styles.subText}>Upload songs & wait for approval!</Text>
         </View>
@@ -92,8 +104,14 @@ const HomeScreen = () => {
           renderItem={renderSongItem}
           numColumns={2}
           columnWrapperStyle={styles.columnWrapper}
+          showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+            />
           }
           contentContainerStyle={styles.listContainer}
         />
@@ -107,21 +125,21 @@ export default HomeScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: 20,
-    paddingHorizontal: 16,
+    backgroundColor: theme.colors.background,
+    paddingTop: 10,
+    paddingHorizontal: 20,
   },
   header: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#333',
+    ...theme.typography.header,
+    color: theme.colors.text,
     marginBottom: 20,
-    paddingHorizontal: 4,
+    marginTop: 10,
   },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: theme.colors.background,
   },
   listContainer: {
     paddingBottom: 20,
@@ -130,37 +148,43 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   card: {
-    width: '48%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    marginBottom: 16,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    width: '47%',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.layout.borderRadius,
+    marginBottom: 20,
+    ...theme.shadows.soft,
     overflow: 'hidden',
+    position: 'relative',
   },
   cardImageContainer: {
     height: 120,
-    backgroundColor: '#007bff', // You can change this to a gradient if you add a library, or use random colors
+    backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: theme.layout.borderRadius,
+    borderTopRightRadius: theme.layout.borderRadius,
   },
   cardContent: {
     padding: 12,
   },
   songTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 4,
   },
   artistName: {
-    fontSize: 13,
-    color: '#666',
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    fontWeight: '500',
+  },
+  playIconOverlay: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 15,
+    elevation: 2,
   },
   emptyContainer: {
     flex: 1,
@@ -171,11 +195,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#555',
+    color: theme.colors.text,
+    marginTop: 10,
   },
   subText: {
     fontSize: 14,
-    color: '#888',
-    marginTop: 8,
+    color: theme.colors.textSecondary,
+    marginTop: 5,
   },
 });

@@ -13,6 +13,8 @@ import SongUploadScreen from '../screens/Settings/SongUploadScreen.js';
 import AdminDashboard from '../screens/Admin/AdminDashboard';
 import ManageUsersScreen from '../screens/Admin/ManageUsersScreen';
 import ManageSongsScreen from '../screens/Admin/ManageSongsScreen';
+import NotificationScreen from '../screens/Notifications/NotificationScreen';
+import SendNotificationScreen from '../screens/Admin/SendNotificationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -115,6 +117,18 @@ const MainNavigator = () => {
                 name="ManageSongs"
                 component={ManageSongsScreen}
                 options={{ title: 'Manage Songs' }}
+            />
+
+            {/* ⭐ Notification Screens */}
+            <Stack.Screen
+                name="NotificationScreen"
+                component={NotificationScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="SendNotification"
+                component={SendNotificationScreen}
+                options={{ headerShown: false }}
             />
 
         </Stack.Navigator>

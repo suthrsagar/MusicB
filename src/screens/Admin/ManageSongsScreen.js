@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Alert, StatusBar } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
+import { theme } from '../../theme';
 
 const BASE_URL = 'http://10.206.215.196:5000';
 
@@ -81,9 +82,9 @@ const ManageSongsScreen = () => {
     };
 
     const renderItem = ({ item }) => (
-        <View style={styles.songItem}>
-            <View style={[styles.iconContainer, { backgroundColor: item.status === 'pending' ? '#FFC107' : '#28a745' }]}>
-                <Ionicons name="musical-note" size={24} color="#fff" />
+        <View style={styles.songCard}>
+            <View style={[styles.iconBox, { backgroundColor: item.status === 'pending' ? '#FFC107' : theme.colors.success }]}>
+                <Ionicons name="musical-note" size={20} color="#fff" />
             </View>
             <View style={styles.songInfo}>
                 <Text style={styles.songTitle} numberOfLines={1}>{item.title}</Text>
@@ -96,12 +97,12 @@ const ManageSongsScreen = () => {
             <View style={styles.actions}>
                 {activeTab === 'pending' && (
                     <TouchableOpacity onPress={() => approveSong(item._id)} style={styles.actionBtn}>
-                        <Ionicons name="checkmark-circle" size={32} color="#28a745" />
+                        <Ionicons name="checkmark-circle" size={30} color={theme.colors.success} />
                     </TouchableOpacity>
                 )}
 
                 <TouchableOpacity onPress={() => deleteSong(item._id, activeTab === 'pending')}>
-                    <Ionicons name={activeTab === 'pending' ? "close-circle" : "trash"} size={32} color="#dc3545" />
+                    <Ionicons name={activeTab === 'pending' ? "close-circle" : "trash"} size={30} color={theme.colors.error} />
                 </TouchableOpacity>
             </View>
         </View>
@@ -109,6 +110,9 @@ const ManageSongsScreen = () => {
 
     return (
         <View style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+            <Text style={styles.header}>Manage Songs</Text>
+
             <View style={styles.tabs}>
                 <TouchableOpacity
                     style={[styles.tab, activeTab === 'pending' && styles.activeTab]}
@@ -120,13 +124,13 @@ const ManageSongsScreen = () => {
                     style={[styles.tab, activeTab === 'all' && styles.activeTab]}
                     onPress={() => setActiveTab('all')}
                 >
-                    <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>Approved (Live)</Text>
+                    <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>Approved</Text>
                 </TouchableOpacity>
             </View>
 
             {loading ? (
                 <View style={styles.center}>
-                    <ActivityIndicator size="large" color="#007bff" />
+                    <ActivityIndicator size="large" color={theme.colors.primary} />
                 </View>
             ) : (
                 <FlatList
@@ -134,8 +138,10 @@ const ManageSongsScreen = () => {
                     keyExtractor={item => item._id}
                     renderItem={renderItem}
                     contentContainerStyle={styles.list}
+                    showsVerticalScrollIndicator={false}
                     ListEmptyComponent={
                         <View style={styles.center}>
+                            <Ionicons name="musical-notes-outline" size={50} color={theme.colors.border} />
                             <Text style={styles.emptyText}>No songs found</Text>
                         </View>
                     }
@@ -150,29 +156,38 @@ export default ManageSongsScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: theme.colors.background,
+        padding: 20,
+    },
+    header: {
+        ...theme.typography.header,
+        color: theme.colors.text,
+        marginBottom: 20,
+        marginTop: 10,
     },
     tabs: {
         flexDirection: 'row',
-        padding: 10,
-        backgroundColor: '#f1f1f1',
+        padding: 5,
+        backgroundColor: theme.colors.surface,
+        borderRadius: 12,
+        marginBottom: 20,
+        ...theme.shadows.soft,
     },
     tab: {
         flex: 1,
-        paddingVertical: 12,
+        paddingVertical: 10,
         alignItems: 'center',
         borderRadius: 8,
     },
     activeTab: {
-        backgroundColor: '#fff',
-        elevation: 2,
+        backgroundColor: theme.colors.background, // Or a light primary tint
     },
     tabText: {
-        color: '#666',
+        color: theme.colors.textSecondary,
         fontWeight: '600',
     },
     activeTabText: {
-        color: '#007bff',
+        color: theme.colors.primary,
         fontWeight: 'bold',
     },
     center: {
@@ -181,29 +196,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 50,
     },
-    header: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-        color: '#333',
-    },
     list: {
-        padding: 20,
         paddingBottom: 40,
     },
-    songItem: {
+    songCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f9f9f9',
-        padding: 12,
-        borderRadius: 12,
-        marginBottom: 12,
-        elevation: 2,
+        backgroundColor: theme.colors.surface,
+        padding: 15,
+        borderRadius: 16,
+        marginBottom: 15,
+        ...theme.shadows.soft,
     },
-    iconContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
+    iconBox: {
+        width: 45,
+        height: 45,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 15,
@@ -213,17 +221,17 @@ const styles = StyleSheet.create({
     },
     songTitle: {
         fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
+        fontWeight: '700',
+        color: theme.colors.text,
     },
     artistName: {
         fontSize: 14,
-        color: '#666',
+        color: theme.colors.textSecondary,
         marginTop: 2,
     },
     uploader: {
         fontSize: 12,
-        color: '#999',
+        color: theme.colors.border,
         marginTop: 2,
         fontStyle: 'italic',
     },
@@ -236,6 +244,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
-        color: '#888',
+        color: theme.colors.textSecondary,
+        marginTop: 10,
     }
 });
