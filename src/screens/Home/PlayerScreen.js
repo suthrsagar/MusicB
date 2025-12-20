@@ -6,8 +6,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StatusBar,
-  Alert
+  Alert,
+  PermissionsAndroid,
+  Image,
+  Platform
 } from 'react-native';
+import RNFS from 'react-native-fs';
 import Slider from '@react-native-community/slider';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
@@ -132,6 +136,74 @@ const PlayerScreen = ({ route, navigation }) => {
     return `${min}:${sec < 10 ? '0' + sec : sec}`;
   };
 
+  const downloadSong = async () => {
+    if (!activeSong) return;
+
+    try {
+      // 1. Check Permissions (Android)
+      if (Platform.OS === 'android' && Platform.Version < 33) {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: 'Storage Permission',
+            message: 'App needs access to store downloaded songs.',
+          }
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Permission Denied', 'Storage permission is required to download.');
+          return;
+        }
+      }
+
+      // 2. Define Path
+      const fileName = `${activeSong.title.replace(/[^a-zA-Z0-9]/g, '_')}.mp3`;
+      const path = `${RNFS.DownloadDirectoryPath}/${fileName}`;
+      const streamUrl = `${BASE_URL}/api/song/stream/${activeSong.fileId}`;
+      const token = await AsyncStorage.getItem('token');
+
+      // 3. Start Download
+      Alert.alert('Downloading', `Started downloading ${activeSong.title}...`);
+
+      const options = {
+        fromUrl: streamUrl,
+        toFile: path,
+        headers: token ? { 'x-auth-token': token } : {},
+        background: true,
+        discretionary: true,
+        begin: (res) => {
+          // console.log('Download has begun', res);
+        },
+        progress: (res) => {
+          // console.log((res.bytesWritten / res.contentLength));
+        }
+      };
+
+      const ret = RNFS.downloadFile(options);
+
+      ret.promise.then((res) => {
+        Alert.alert('Download Complete', `Saved to ${path}`);
+      }).catch((err) => {
+        console.error(err);
+        Alert.alert('Download Failed', 'Could not save the file.');
+      });
+
+    } catch (e) {
+      console.error(e);
+      Alert.alert('Error', 'An error occurred while downloading.');
+    }
+  };
+
+  const handleMenu = () => {
+    Alert.alert(
+      'Options',
+      'Select an action',
+      [
+        { text: 'Download Song', onPress: downloadSong },
+        { text: 'Cancel', style: 'cancel' }
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
@@ -142,7 +214,7 @@ const PlayerScreen = ({ route, navigation }) => {
           <Ionicons name="chevron-down" size={30} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Now Playing</Text>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity style={styles.iconButton} onPress={handleMenu}>
           <Ionicons name="ellipsis-horizontal" size={30} color={theme.colors.text} />
         </TouchableOpacity>
       </View>

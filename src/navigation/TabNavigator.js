@@ -12,7 +12,7 @@ import SettingsScreen from '../screens/Settings/SettingsScreen';
 import Header from '../Componemt/hedder';
 
 import { View } from 'react-native';
-import MiniPlayer from '../components/MiniPlayer';
+import MiniPlayer from '../Componemt/MiniPlayer';
 
 const Tab = createBottomTabNavigator();
 

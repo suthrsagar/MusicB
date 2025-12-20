@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 24,
-        paddingVertical: 16,
+        paddingVertical: 30,
         backgroundColor: theme.colors.surface,
         ...theme.shadows.medium,
         borderBottomLeftRadius: 24,

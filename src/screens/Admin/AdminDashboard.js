@@ -116,7 +116,38 @@ const AdminDashboard = () => {
                     <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
             </View>
-        </ScrollView>
+
+            <Text style={styles.sectionHeader}>Business & Analytics</Text>
+            <View style={styles.menuContainer}>
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => navigation.navigate('AnalyticsScreen')}
+                >
+                    <View style={[styles.menuIconBox, { backgroundColor: 'rgba(0, 200, 83, 0.1)' }]}>
+                        <Ionicons name="bar-chart-outline" size={28} color="#00C853" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.menuText}>App Analytics</Text>
+                        <Text style={styles.menuSubText}>See insights, streams & revenue</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => navigation.navigate('MonetizationScreen')}
+                >
+                    <View style={[styles.menuIconBox, { backgroundColor: 'rgba(255, 171, 0, 0.1)' }]}>
+                        <Ionicons name="wallet-outline" size={28} color="#FFAB00" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.menuText}>Monetization</Text>
+                        <Text style={styles.menuSubText}>Ads, Plans & Artist Payouts</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+            </View>
+        </ScrollView >
     );
 };
 

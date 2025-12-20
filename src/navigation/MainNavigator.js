@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import messaging from '@react-native-firebase/messaging';
+import { Alert } from 'react-native';
 
 import TabNavigator from './TabNavigator';
 
@@ -15,6 +17,8 @@ import ManageUsersScreen from '../screens/Admin/ManageUsersScreen';
 import ManageSongsScreen from '../screens/Admin/ManageSongsScreen';
 import NotificationScreen from '../screens/Notifications/NotificationScreen';
 import SendNotificationScreen from '../screens/Admin/SendNotificationScreen';
+import MonetizationScreen from '../screens/Admin/MonetizationScreen';
+import AnalyticsScreen from '../screens/Admin/AnalyticsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -38,6 +42,42 @@ const MainNavigator = () => {
             }
         };
         checkToken();
+    }, []);
+
+    // Push Notification Setup
+    useEffect(() => {
+        const requestUserPermission = async () => {
+            try {
+                const authStatus = await messaging().requestPermission();
+                const enabled =
+                    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+                    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+                if (enabled) {
+                    console.log('Authorization status:', authStatus);
+                    // Subscribe to topic
+                    await messaging().subscribeToTopic('all_users');
+                    console.log('Subscribed to all_users');
+                }
+            } catch (error) {
+                console.log('Permission rejected/error', error);
+            }
+        };
+
+        requestUserPermission();
+
+        // Foreground Handler
+        const unsubscribe = messaging().onMessage(async remoteMessage => {
+            console.log('Foreground notification received:', remoteMessage);
+            // We removed the Alert.alert here so it doesn't "pop" over the app.
+        });
+
+        // Background / Quit Handler (optional check)
+        messaging().setBackgroundMessageHandler(async remoteMessage => {
+            console.log('Message handled in the background!', remoteMessage);
+        });
+
+        return unsubscribe;
     }, []);
 
     if (isLoading) {
@@ -128,6 +168,16 @@ const MainNavigator = () => {
             <Stack.Screen
                 name="SendNotification"
                 component={SendNotificationScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="MonetizationScreen"
+                component={MonetizationScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="AnalyticsScreen"
+                component={AnalyticsScreen}
                 options={{ headerShown: false }}
             />
 
