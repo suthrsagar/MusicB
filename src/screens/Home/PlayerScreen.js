@@ -22,7 +22,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../services/apiConfig';
 
 const PlayerScreen = ({ route, navigation }) => {
-  // Player fixed
   const { song, playlist } = route.params || {};
   const {
     currentSong,
@@ -36,54 +35,44 @@ const PlayerScreen = ({ route, navigation }) => {
     playPrev
   } = useMusic();
 
-  // ... (rest of code)
-
-  /* Controls removed from here */
-
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [viewsCount, setViewsCount] = useState(0);
 
-  // Handle new song selection from other screens
+
   useEffect(() => {
     if (song) {
-      // Only play if the requested song is not already the current one
       if (!currentSong || currentSong.fileId !== song.fileId) {
         playSong(song, playlist || []);
       }
     }
   }, [song]); // Only run when the route param 'song' changes
 
-  // If no song is playing and no song passed, go back
+
   if (!currentSong && !song) {
-    // navigation.goBack(); // Optional: might loop if not careful
     return null;
   }
 
-  // Use either the passed song (initially) or the context song
+
   const activeSong = currentSong || song;
 
-  // Check Like status on load
-  // Check Like status on load
+
   useEffect(() => {
     const fetchSongDetails = async () => {
       if (!activeSong) return;
       try {
         const token = await AsyncStorage.getItem('token');
 
-        // 1. Record View (Unique listener)
         if (token) {
           axios.post(`${BASE_URL}/api/song/view/${activeSong._id}`, {}, {
             headers: { 'x-auth-token': token }
           }).catch(e => console.log("View record error", e));
         }
 
-        // 2. Fetch fresh song data
         const songRes = await axios.get(`${BASE_URL}/api/song/${activeSong._id}`);
         setViewsCount(songRes.data.views ? songRes.data.views.length : 0);
         setLikesCount(songRes.data.likes ? songRes.data.likes.length : 0);
 
-        // 3. Check if I liked it
         if (token) {
           const profileRes = await axios.get(`${BASE_URL}/api/profile`, {
             headers: { 'x-auth-token': token }
@@ -114,9 +103,7 @@ const PlayerScreen = ({ route, navigation }) => {
         headers: { 'x-auth-token': token }
       });
 
-      // Toggle UI
       setLiked(!liked);
-      // Backend returns new likes array, so use that length
       setLikesCount(res.data.likes.length);
 
     } catch (e) {
@@ -140,7 +127,6 @@ const PlayerScreen = ({ route, navigation }) => {
     if (!activeSong) return;
 
     try {
-      // 1. Check Permissions (Android)
       if (Platform.OS === 'android' && Platform.Version < 33) {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
@@ -155,7 +141,6 @@ const PlayerScreen = ({ route, navigation }) => {
         }
       }
 
-      // 2. Define Path
       const fileName = `${activeSong.title.replace(/[^a-zA-Z0-9]/g, '_')}.mp3`;
       const path = `${RNFS.DownloadDirectoryPath}/${fileName}`;
       const streamUrl = `${BASE_URL}/api/song/stream/${activeSong.fileId}`;

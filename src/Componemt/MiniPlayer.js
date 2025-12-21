@@ -52,7 +52,7 @@ const MiniPlayer = () => {
 const styles = StyleSheet.create({
     outerContainer: {
         position: 'absolute',
-        bottom: 105, // Positioned above the 70+20=90px TabBar
+        bottom: 105,
         left: 0,
         right: 0,
         alignItems: 'center',

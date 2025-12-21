@@ -13,7 +13,6 @@ const SplashScreen = () => {
     const textAnim = useRef(new Animated.Value(20)).current;
 
     useEffect(() => {
-        // Start animations
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
@@ -33,7 +32,6 @@ const SplashScreen = () => {
             })
         ]).start();
 
-        // Check auth and navigate
         const checkAuth = async () => {
             const token = await AsyncStorage.getItem('token');
             setTimeout(() => {
@@ -42,7 +40,7 @@ const SplashScreen = () => {
                 } else {
                     navigation.replace('LoginProfile');
                 }
-            }, 2500); // 2.5 seconds splash
+            }, 2500);
         };
 
         checkAuth();
@@ -52,20 +50,11 @@ const SplashScreen = () => {
         <View style={styles.container}>
             <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 
-            {/* Background Decorative Circles */}
             <View style={[styles.circle, { top: -50, right: -50, backgroundColor: theme.colors.secondary }]} />
             <View style={[styles.circle, { bottom: -100, left: -100, width: 300, height: 300, backgroundColor: theme.colors.primary, opacity: 0.1 }]} />
 
             <View style={styles.content}>
-                <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
-                    <Animated.Image
-                        source={require('../../assest/image/logo.png')}
-                        style={styles.logo}
-                        resizeMode="contain"
-                    />
-                </Animated.View>
-
-                <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: textAnim }] }}>
+                <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY: textAnim }] }}>
                     <Text style={styles.appName}>MoiveB</Text>
                     <Text style={styles.tagline}>Pulse of Entertainment</Text>
                 </Animated.View>
@@ -84,25 +73,23 @@ const styles = StyleSheet.create({
     content: {
         alignItems: 'center',
     },
-    logo: {
-        width: 150,
-        height: 150,
-        borderRadius: 40,
-        marginBottom: 20,
-    },
     appName: {
-        fontSize: 32,
+        fontSize: 48,
         fontWeight: '900',
         color: '#FFFFFF',
-        letterSpacing: 2,
+        letterSpacing: 4,
+        textShadowColor: 'rgba(0, 0, 0, 0.2)',
+        textShadowOffset: { width: 0, height: 4 },
+        textShadowRadius: 10,
     },
     tagline: {
-        fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.7)',
-        marginTop: 5,
-        fontWeight: '500',
-        letterSpacing: 1.5,
+        fontSize: 16,
+        color: 'rgba(255, 255, 255, 0.8)',
+        marginTop: 10,
+        fontWeight: '600',
+        letterSpacing: 2,
         textTransform: 'uppercase',
+        textAlign: 'center',
     },
     circle: {
         position: 'absolute',

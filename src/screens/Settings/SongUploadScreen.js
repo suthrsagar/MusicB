@@ -264,13 +264,13 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   input: {
-    backgroundColor: theme.colors.inputBackground, // Light grey/blue background for input
+    backgroundColor: theme.colors.inputBackground,
     borderRadius: 12,
     padding: 15,
     fontSize: 16,
     color: theme.colors.text,
     borderWidth: 1,
-    borderColor: 'transparent', // No border by default
+    borderColor: 'transparent',
   },
   row: {
     flexDirection: 'row',

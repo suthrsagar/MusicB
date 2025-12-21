@@ -41,7 +41,6 @@ const HomeScreen = () => {
     fetchSongs();
   }, []);
 
-  // Reload songs whenever the screen comes into focus
   useFocusEffect(
     useCallback(() => {
       fetchSongs();
@@ -57,7 +56,7 @@ const HomeScreen = () => {
     <TouchableOpacity
       style={styles.card}
       onPress={() => {
-        playSong(item, songs); // Pass current list as queue
+        playSong(item, songs);
         navigation.navigate('PlayerScreen', { song: item, playlist: songs });
       }}
       activeOpacity={0.9}

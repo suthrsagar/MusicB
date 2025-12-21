@@ -29,25 +29,21 @@ const ProfileScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [btnLoading, setBtnLoading] = useState(false);
 
-  // Auth Form State
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [imageUri, setImageUri] = useState(null);
 
-  // Profile Data
   const [profile, setProfile] = useState(null);
 
   const api = axios.create({ baseURL: API_URL });
 
-  // 🔐 Attach token to every request
   api.interceptors.request.use(async config => {
     const token = await AsyncStorage.getItem('token');
     if (token) config.headers['x-auth-token'] = token;
     return config;
   });
 
-  // 🔁 Check login on mount
   useEffect(() => {
     const init = async () => {
       const token = await AsyncStorage.getItem('token');
@@ -60,7 +56,6 @@ const ProfileScreen = ({ navigation }) => {
     init();
   }, []);
 
-  // 📸 Permission
   const requestPermission = async () => {
     if (Platform.OS === 'android') {
       const permission =
@@ -73,7 +68,6 @@ const ProfileScreen = ({ navigation }) => {
     return true;
   };
 
-  // 📷 Pick image (For Registration)
   const pickImage = async () => {
     const ok = await requestPermission();
     if (!ok) {
@@ -87,7 +81,6 @@ const ProfileScreen = ({ navigation }) => {
     });
   };
 
-  // 📝 Register
   const handleRegister = async () => {
     if (!username || !email || !password || !imageUri) {
       Alert.alert('All fields & profile photo required');
@@ -120,7 +113,6 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
-  // 🔐 Login
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Email & password required');
@@ -140,14 +132,12 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
-  // 👤 Fetch
   const fetchProfile = async () => {
     try {
       const res = await api.get('profile');
       setProfile(res.data);
     } catch (err) {
       console.error('Fetch Profile Error:', err);
-      // If user is not found or unauthorized (deleted from DB), logout automatically
       if (err.response?.status === 401 || err.response?.status === 404) {
         handleLogout();
       } else {
@@ -156,7 +146,6 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
-  //  Logout
   const handleLogout = async () => {
     await AsyncStorage.removeItem('token');
     setIsLoggedIn(false);
@@ -180,7 +169,6 @@ const ProfileScreen = ({ navigation }) => {
     return `${BASE_URL}${cleanPath}?t=${new Date().getTime()}`;
   };
 
-  // 📸 Update Profile Photo Only
   const handleUpdateProfilePhoto = async () => {
     const ok = await requestPermission();
     if (!ok) {
@@ -207,7 +195,6 @@ const ProfileScreen = ({ navigation }) => {
           });
 
           if (response.data && response.data.avatar) {
-            // Update local profile state with new image URL
             setProfile(prev => ({ ...prev, avatar: response.data.avatar }));
             Alert.alert('Success', 'Profile photo updated successfully!');
           }
@@ -229,13 +216,11 @@ const ProfileScreen = ({ navigation }) => {
     );
   }
 
-  // --- LOGIN / REGISTER VIEW (PREMIUM) ---
   if (!isLoggedIn) {
     return (
       <View style={styles.authWrapper}>
         <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
 
-        {/* Dynamic Background Decor */}
         <View style={styles.topGradient} />
         <View style={styles.blurCircle1} />
         <View style={styles.blurCircle2} />
@@ -245,7 +230,6 @@ const ProfileScreen = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header Section */}
           <View style={styles.authHeader}>
             <View style={styles.logoCircle}>
               <Ionicons name="musical-notes" size={50} color="#fff" />
@@ -258,7 +242,6 @@ const ProfileScreen = ({ navigation }) => {
             </Text>
           </View>
 
-          {/* Form Card */}
           <View style={styles.authCard}>
             <Text style={styles.formTitle}>
               {isRegister ? 'Create Account' : 'Sign In'}
@@ -388,7 +371,6 @@ const ProfileScreen = ({ navigation }) => {
     );
   }
 
-  // --- PROFILE VIEW (DISPLAY ONLY) ---
   if (isLoggedIn && !profile) {
     return (
       <View style={styles.center}>
@@ -401,7 +383,6 @@ const ProfileScreen = ({ navigation }) => {
     <ScrollView contentContainerStyle={styles.profileContainer}>
       <View style={styles.bgDecorCircle} />
 
-      {/* Profile Card */}
       <View style={styles.profileCard}>
         <TouchableOpacity
           style={styles.avatarContainer}
@@ -409,7 +390,7 @@ const ProfileScreen = ({ navigation }) => {
           activeOpacity={0.8}
         >
           <Image
-            key={profile?.avatar} // Force reload when avatar changes
+            key={profile?.avatar}
             source={getAvatarUrl() ? { uri: getAvatarUrl() } : require('../../assest/image/logo.png')}
             style={styles.profileImage}
           />

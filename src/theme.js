@@ -1,14 +1,14 @@
 export const theme = {
     colors: {
-        background: '#F4F7FE', // Very light cool gray/blueish background (Premium feel)
-        surface: '#FFFFFF',    // White for cards
-        primary: '#4318FF',    // Electric Blue/Purple (Vibrant & Modern)
-        secondary: '#6AD2FF',  // Light Blue accent
-        accent: '#E01E5A',     // Pinkish Red for hearts/active states
-        text: '#1B254B',       // Deep Navy Blue (High contrast, softer than black)
-        textSecondary: '#A3AED0', // Cool Gray
+        background: '#F4F7FE',
+        surface: '#FFFFFF',
+        primary: '#4318FF',
+        secondary: '#6AD2FF',
+        accent: '#E01E5A',
+        text: '#1B254B',
+        textSecondary: '#A3AED0',
         border: '#E0E5F2',
-        inputBackground: '#F4F7FE', // Matches background for neat inputs
+        inputBackground: '#F4F7FE',
         success: '#05CD99',
         error: '#EE5D50',
     },
@@ -18,7 +18,7 @@ export const theme = {
         body: { fontSize: 14, color: '#A3AED0' },
     },
     layout: {
-        borderRadius: 20, // Modern rounded corners
+        borderRadius: 20,
         cardPadding: 20,
     },
     shadows: {

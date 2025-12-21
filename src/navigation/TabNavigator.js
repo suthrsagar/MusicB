@@ -1,9 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { theme } from '../theme'; // Import Theme
+import { theme } from '../theme';
 
-// Import Screens
 import HomeScreen from '../screens/Home/HomeScreen';
 import SearchScreen from '../screens/Search/SearchScreen';
 import Premium from '../screens/premium/Premium';

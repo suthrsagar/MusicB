@@ -14,7 +14,6 @@ export default function SearchScreen() {
   const [filteredSongs, setFilteredSongs] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch all songs initially
   useEffect(() => {
     fetchSongs();
   }, []);
@@ -24,7 +23,7 @@ export default function SearchScreen() {
     try {
       const response = await axios.get(`${BASE_URL}/api/song`);
       setAllSongs(response.data);
-      setFilteredSongs(response.data); // Initially show all
+      setFilteredSongs(response.data);
     } catch (error) {
       console.error('Error fetching songs:', error);
     } finally {
@@ -32,7 +31,6 @@ export default function SearchScreen() {
     }
   };
 
-  // Filter songs when query changes
   useEffect(() => {
     if (query.trim() === '') {
       setFilteredSongs(allSongs);
@@ -72,7 +70,6 @@ export default function SearchScreen() {
 
       <Text style={styles.header}>Search</Text>
 
-      {/* Search Bar */}
       <View style={styles.searchBarContainer}>
         <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
         <TextInput
@@ -89,7 +86,6 @@ export default function SearchScreen() {
         )}
       </View>
 
-      {/* Songs List */}
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />
       ) : (

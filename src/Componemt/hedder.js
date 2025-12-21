@@ -50,7 +50,6 @@ const Header = () => {
     return (
         <SafeAreaView style={{ backgroundColor: theme.colors.surface, elevation: 5, zIndex: 100 }}>
             <View style={styles.container}>
-                {/* Logo Section */}
                 <View style={styles.logoContainer}>
                     <View style={styles.logoIcon}>
                         <Icon name="musical-notes" size={20} color="#fff" />
@@ -61,7 +60,6 @@ const Header = () => {
                     </View>
                 </View>
 
-                {/* Notification Bell */}
                 <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('NotificationScreen')}>
                     <Icon name="notifications-outline" size={26} color={theme.colors.text} />
                     {hasUnread && <View style={styles.badge} />}

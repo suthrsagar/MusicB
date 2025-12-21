@@ -25,7 +25,6 @@ const Stack = createNativeStackNavigator();
 
 const MainNavigator = () => {
 
-    // Push Notification Setup
     useEffect(() => {
         const requestUserPermission = async () => {
             try {
@@ -80,14 +79,12 @@ const MainNavigator = () => {
                 component={SplashScreen}
                 options={{ headerShown: false }}
             />
-            {/* ⭐ Login/Profile Screen (Route for unauthenticated users) */}
             <Stack.Screen
                 name="LoginProfile"
                 component={ProfileScreen}
                 options={{ headerShown: false }}
             />
 
-            {/* ⭐ Main App Tabs */}
             <Stack.Screen
                 name="Tabs"
                 component={TabNavigator}
@@ -100,21 +97,18 @@ const MainNavigator = () => {
                 options={{ headerShown: false }}
             />
 
-            {/* ⭐ HomeScreen now in Tabs, but kept here if direct nav needed (though usually not) */}
             <Stack.Screen
                 name="HomeScreen"
                 component={HomeScreen}
                 options={{ headerShown: false }}
             />
 
-            {/* ⭐ PlayerScreen */}
             <Stack.Screen
                 name="PlayerScreen"
                 component={PlayerScreen}
                 options={{ headerShown: false }}
             />
 
-            {/* ⭐ Profile Screen as accessed from Tabs (optional, but TabNavigator usually handles it) */}
             <Stack.Screen
                 name="ProfileScreen"
                 component={ProfileScreen}
@@ -124,7 +118,6 @@ const MainNavigator = () => {
                 }}
             />
 
-            {/* ⭐ Admin Screens */}
             <Stack.Screen
                 name="AdminDashboard"
                 component={AdminDashboard}
@@ -141,7 +134,6 @@ const MainNavigator = () => {
                 options={{ title: 'Manage Songs' }}
             />
 
-            {/* ⭐ Notification Screens */}
             <Stack.Screen
                 name="NotificationScreen"
                 component={NotificationScreen}
