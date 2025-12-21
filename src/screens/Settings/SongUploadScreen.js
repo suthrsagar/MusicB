@@ -28,19 +28,24 @@ const SongUploadScreen = () => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const [isLoggedIn, setIsLoggedIn] = useState(true); // Default to true to avoid flicker if token exists
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const token = await AsyncStorage.getItem('token');
         if (!token) {
+          setIsLoggedIn(false);
           Alert.alert(
-            'Authentication Error',
-            'You need to be logged in to upload songs.',
+            'Authentication Required',
+            'Please login to upload your songs and share them with the world!',
             [{ text: 'Go to Login', onPress: () => navigation.navigate('Profile') }]
           );
+        } else {
+          setIsLoggedIn(true);
         }
       } catch (error) {
-        console.error('Auth check failed', error);
+        setIsLoggedIn(false);
       }
     };
     checkAuth();
@@ -150,22 +155,24 @@ const SongUploadScreen = () => {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Song Title *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, !isLoggedIn && { opacity: 0.5 }]}
             value={title}
             onChangeText={setTitle}
             placeholder="e.g. Summer Vibes"
             placeholderTextColor={theme.colors.textSecondary}
+            editable={isLoggedIn}
           />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Artist Name *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, !isLoggedIn && { opacity: 0.5 }]}
             value={artist}
             onChangeText={setArtist}
             placeholder="e.g. John Doe"
             placeholderTextColor={theme.colors.textSecondary}
+            editable={isLoggedIn}
           />
         </View>
 
@@ -173,29 +180,35 @@ const SongUploadScreen = () => {
           <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
             <Text style={styles.label}>Album (Opt)</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, !isLoggedIn && { opacity: 0.5 }]}
               value={album}
               onChangeText={setAlbum}
               placeholder="e.g. Hits"
               placeholderTextColor={theme.colors.textSecondary}
+              editable={isLoggedIn}
             />
           </View>
           <View style={[styles.inputGroup, { flex: 1 }]}>
             <Text style={styles.label}>Genre (Opt)</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, !isLoggedIn && { opacity: 0.5 }]}
               value={genre}
               onChangeText={setGenre}
               placeholder="e.g. Pop"
               placeholderTextColor={theme.colors.textSecondary}
+              editable={isLoggedIn}
             />
           </View>
         </View>
 
         <Text style={styles.sectionTitle}>Audio File</Text>
-        <TouchableOpacity style={styles.pickButton} onPress={handlePickDocument}>
-          <Ionicons name={file ? "checkmark-circle" : "musical-note"} size={24} color={file ? theme.colors.success : theme.colors.primary} />
-          <Text style={[styles.pickButtonText, file && { color: theme.colors.success }]}>
+        <TouchableOpacity
+          style={[styles.pickButton, !isLoggedIn && styles.disabledButton]}
+          onPress={handlePickDocument}
+          disabled={!isLoggedIn}
+        >
+          <Ionicons name={file ? "checkmark-circle" : "musical-note"} size={24} color={file ? theme.colors.success : isLoggedIn ? theme.colors.primary : theme.colors.textSecondary} />
+          <Text style={[styles.pickButtonText, file && { color: theme.colors.success }, !isLoggedIn && { color: theme.colors.textSecondary }]}>
             {file ? file.name : 'Choose Audio File'}
           </Text>
         </TouchableOpacity>
@@ -206,12 +219,21 @@ const SongUploadScreen = () => {
           <TouchableOpacity
             style={[
               styles.uploadButton,
-              (!file || !title || !artist) && styles.disabledButton,
+              (!file || !title || !artist || !isLoggedIn) && styles.disabledButton,
             ]}
             onPress={handleUpload}
-            disabled={!file || !title || !artist}
+            disabled={!file || !title || !artist || !isLoggedIn}
           >
             <Text style={styles.uploadButtonText}>Upload Song</Text>
+          </TouchableOpacity>
+        )}
+
+        {!isLoggedIn && (
+          <TouchableOpacity
+            style={[styles.uploadButton, { marginTop: 15, backgroundColor: theme.colors.secondary }]}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <Text style={styles.uploadButtonText}>Sign In to Upload</Text>
           </TouchableOpacity>
         )}
       </View>
