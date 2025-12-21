@@ -21,7 +21,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
 
 import { BASE_URL } from '../../services/apiConfig';
-const API_URL = `${BASE_URL}/api`;
+const API_URL = `${BASE_URL}/api/`;
 
 const ProfileScreen = ({ navigation }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -95,8 +95,8 @@ const ProfileScreen = ({ navigation }) => {
     }
     setBtnLoading(true);
     try {
-      await api.post('/register', { username, email, password });
-      const loginRes = await api.post('/login', { email, password });
+      await api.post('register', { username, email, password });
+      const loginRes = await api.post('login', { email, password });
       await AsyncStorage.setItem('token', loginRes.data.token);
 
       const formData = new FormData();
@@ -105,7 +105,7 @@ const ProfileScreen = ({ navigation }) => {
         type: 'image/jpeg',
         name: 'avatar.jpg',
       });
-      await api.post('/profile/photo', formData, {
+      await api.post('profile/photo', formData, {
         headers: { 'Content-Type': 'multipart/form-data', 'x-auth-token': loginRes.data.token },
       });
 
@@ -128,7 +128,7 @@ const ProfileScreen = ({ navigation }) => {
     }
     setBtnLoading(true);
     try {
-      const res = await api.post('/login', { email, password });
+      const res = await api.post('login', { email, password });
       await AsyncStorage.setItem('token', res.data.token);
       setIsLoggedIn(true);
       await fetchProfile();
@@ -143,10 +143,16 @@ const ProfileScreen = ({ navigation }) => {
   // 👤 Fetch
   const fetchProfile = async () => {
     try {
-      const res = await api.get('/profile');
+      const res = await api.get('profile');
       setProfile(res.data);
-    } catch {
-      Alert.alert('Error', 'Could not load profile');
+    } catch (err) {
+      console.error('Fetch Profile Error:', err);
+      // If user is not found or unauthorized (deleted from DB), logout automatically
+      if (err.response?.status === 401 || err.response?.status === 404) {
+        handleLogout();
+      } else {
+        Alert.alert('Error', 'Could not load profile. Please check your connection.');
+      }
     }
   };
 
@@ -161,7 +167,58 @@ const ProfileScreen = ({ navigation }) => {
 
   const getAvatarUrl = () => {
     if (!profile || !profile.avatar) return null;
-    return profile.avatar.startsWith('http') ? profile.avatar : `${BASE_URL}/${profile.avatar}`;
+
+    if (profile.avatar.startsWith('http')) {
+      return `${profile.avatar}${profile.avatar.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
+    }
+
+    if (profile.avatar.includes('avatar-')) {
+      return `${BASE_URL}/api/avatar/${profile.avatar}?t=${new Date().getTime()}`;
+    }
+
+    const cleanPath = profile.avatar.startsWith('/') ? profile.avatar : `/${profile.avatar}`;
+    return `${BASE_URL}${cleanPath}?t=${new Date().getTime()}`;
+  };
+
+  // 📸 Update Profile Photo Only
+  const handleUpdateProfilePhoto = async () => {
+    const ok = await requestPermission();
+    if (!ok) {
+      Alert.alert('Permission denied');
+      return;
+    }
+
+    launchImageLibrary({ mediaType: 'photo', quality: 0.7 }, async res => {
+      if (res.didCancel) return;
+      if (res.assets?.length) {
+        const selectedImage = res.assets[0];
+        setBtnLoading(true);
+
+        try {
+          const formData = new FormData();
+          formData.append('avatar', {
+            uri: selectedImage.uri,
+            type: selectedImage.type || 'image/jpeg',
+            name: selectedImage.fileName || 'profile.jpg',
+          });
+
+          const response = await api.post('profile/photo', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+
+          if (response.data && response.data.avatar) {
+            // Update local profile state with new image URL
+            setProfile(prev => ({ ...prev, avatar: response.data.avatar }));
+            Alert.alert('Success', 'Profile photo updated successfully!');
+          }
+        } catch (err) {
+          console.error('Upload Error:', err.response?.data || err.message);
+          Alert.alert('Error', err.response?.data?.msg || 'Could not upload photo');
+        } finally {
+          setBtnLoading(false);
+        }
+      }
+    });
   };
 
   if (loading) {
@@ -346,9 +403,20 @@ const ProfileScreen = ({ navigation }) => {
 
       {/* Profile Card */}
       <View style={styles.profileCard}>
-        <View style={styles.avatarContainer}>
-          <Image source={getAvatarUrl() ? { uri: getAvatarUrl() } : require('../../assest/image/logo.png')} style={styles.profileImage} />
-        </View>
+        <TouchableOpacity
+          style={styles.avatarContainer}
+          onPress={handleUpdateProfilePhoto}
+          activeOpacity={0.8}
+        >
+          <Image
+            key={profile?.avatar} // Force reload when avatar changes
+            source={getAvatarUrl() ? { uri: getAvatarUrl() } : require('../../assest/image/logo.png')}
+            style={styles.profileImage}
+          />
+          <View style={styles.editBadge}>
+            <Ionicons name="camera" size={16} color="#fff" />
+          </View>
+        </TouchableOpacity>
 
         <Text style={styles.profileName}>{profile?.username || 'User'}</Text>
         <Text style={styles.profileEmail}>{profile?.email || 'No Email'}</Text>
@@ -644,6 +712,19 @@ const styles = StyleSheet.create({
   profileCard: { width: '85%', backgroundColor: theme.colors.surface, borderRadius: 24, padding: 25, alignItems: 'center', marginBottom: 20, ...theme.shadows.medium },
   avatarContainer: { marginBottom: 15, position: 'relative' },
   profileImage: { width: 110, height: 110, borderRadius: 55, borderWidth: 4, borderColor: theme.colors.surface },
+  editBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: theme.colors.primary,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
   profileName: { fontSize: 24, fontWeight: '800', color: theme.colors.text, marginBottom: 5 },
   profileEmail: { fontSize: 16, color: theme.colors.textSecondary, marginBottom: 20, fontWeight: '500' },
   divider: { width: '100%', height: 1, backgroundColor: theme.colors.border, marginBottom: 20 },

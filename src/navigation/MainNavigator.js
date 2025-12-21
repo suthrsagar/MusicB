@@ -19,30 +19,11 @@ import NotificationScreen from '../screens/Notifications/NotificationScreen';
 import SendNotificationScreen from '../screens/Admin/SendNotificationScreen';
 import MonetizationScreen from '../screens/Admin/MonetizationScreen';
 import AnalyticsScreen from '../screens/Admin/AnalyticsScreen';
+import SplashScreen from '../screens/Auth/SplashScreen';
 
 const Stack = createNativeStackNavigator();
 
 const MainNavigator = () => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [initialRoute, setInitialRoute] = useState('LoginProfile');
-
-    useEffect(() => {
-        const checkToken = async () => {
-            try {
-                const token = await AsyncStorage.getItem('token');
-                if (token) {
-                    setInitialRoute('Tabs');
-                } else {
-                    setInitialRoute('LoginProfile');
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        checkToken();
-    }, []);
 
     // Push Notification Setup
     useEffect(() => {
@@ -54,43 +35,39 @@ const MainNavigator = () => {
                     authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
                 if (enabled) {
-                    console.log('Authorization status:', authStatus);
-                    // Subscribe to topic
                     await messaging().subscribeToTopic('all_users');
-                    console.log('Subscribed to all_users');
                 }
             } catch (error) {
-                console.log('Permission rejected/error', error);
             }
         };
 
         requestUserPermission();
 
-        // Foreground Handler
         const unsubscribe = messaging().onMessage(async remoteMessage => {
-            console.log('Foreground notification received:', remoteMessage);
-            // We removed the Alert.alert here so it doesn't "pop" over the app.
+            Alert.alert(
+                `🔔 ${remoteMessage.notification?.title || 'New Notification'}`,
+                remoteMessage.notification?.body || 'You have a new message!',
+                [
+                    { text: 'Later', style: 'cancel' },
+                    {
+                        text: 'View',
+                        onPress: () => {
+                        }
+                    }
+                ]
+            );
         });
 
-        // Background / Quit Handler (optional check)
         messaging().setBackgroundMessageHandler(async remoteMessage => {
-            console.log('Message handled in the background!', remoteMessage);
         });
 
         return unsubscribe;
     }, []);
 
-    if (isLoading) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#0000ff" />
-            </View>
-        );
-    }
 
     return (
         <Stack.Navigator
-            initialRouteName={initialRoute}
+            initialRouteName="SplashScreen"
             screenOptions={{
                 headerStyle: {
                     backgroundColor: '#FFFFFF',
@@ -98,6 +75,11 @@ const MainNavigator = () => {
                 headerTintColor: '#000000',
             }}
         >
+            <Stack.Screen
+                name="SplashScreen"
+                component={SplashScreen}
+                options={{ headerShown: false }}
+            />
             {/* ⭐ Login/Profile Screen (Route for unauthenticated users) */}
             <Stack.Screen
                 name="LoginProfile"

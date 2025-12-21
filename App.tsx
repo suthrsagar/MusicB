@@ -5,58 +5,55 @@ import { StatusBar, useColorScheme } from 'react-native';
 import MainNavigator from './src/navigation/MainNavigator';
 import { MusicProvider } from './src/context/MusicContext';
 import messaging from '@react-native-firebase/messaging';
-import { PermissionsAndroid, Platform, ToastAndroid } from 'react-native';
+import { PermissionsAndroid, Platform, ToastAndroid, Alert } from 'react-native';
 
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
   const navigationRef = useRef<any>(null);
 
   useEffect(() => {
-    // Handle Foreground Notifications
     const unsubscribeForeground = messaging().onMessage(async remoteMessage => {
-      console.log('Foreground message received:', remoteMessage);
-      if (Platform.OS === 'android') {
-        ToastAndroid.show(
-          `🔔 ${remoteMessage.notification?.title || 'New Notification'}`,
-          ToastAndroid.LONG
-        );
-      }
+      Alert.alert(
+        `🔔 ${remoteMessage.notification?.title || 'New Notification'}`,
+        remoteMessage.notification?.body || 'You have a new message!',
+        [
+          { text: 'Later', style: 'cancel' },
+          { text: 'Open', onPress: () => navigationRef.current?.navigate('NotificationScreen') }
+        ]
+      );
     });
 
-    // Request permission for Android 13+
     const requestPermission = async () => {
-      if (Platform.OS === 'android' && Platform.Version >= 33) {
-        await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+      try {
+        if (Platform.OS === 'android') {
+          if (Platform.Version >= 33) {
+            await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+          }
+          const authStatus = await messaging().requestPermission();
+          const enabled = authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+            authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+          if (enabled) {
+            await messaging().subscribeToTopic('all_users');
+          }
+        }
+      } catch (error) {
       }
     };
     requestPermission();
 
-    // Subscribe to global topic for broadcasts
-    messaging()
-      .subscribeToTopic('all_users')
-      .then(() => console.log('Subscribed to all_users topic!'));
-
-    // Handle Notification Tap (Background -> Foreground)
     const unsubscribe = messaging().onNotificationOpenedApp(remoteMessage => {
-      console.log('Notification caused app to open from background:', remoteMessage);
       if (remoteMessage) {
-        // Navigate to NotificationScreen (or any screen)
         navigationRef.current?.navigate('NotificationScreen');
       }
     });
 
-    // Handle Notification Tap (Quit -> Foreground)
-    messaging()
-      .getInitialNotification()
-      .then(remoteMessage => {
-        if (remoteMessage) {
-          console.log('Notification caused app to open from quit state:', remoteMessage);
-          // We need a small delay to ensure navigator is mounted/ready
-          setTimeout(() => {
-            navigationRef.current?.navigate('NotificationScreen');
-          }, 1000);
-        }
-      });
+    messaging().getInitialNotification().then(remoteMessage => {
+      if (remoteMessage) {
+        setTimeout(() => {
+          navigationRef.current?.navigate('NotificationScreen');
+        }, 1000);
+      }
+    });
 
     return () => {
       unsubscribe();
