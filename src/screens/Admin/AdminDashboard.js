@@ -10,7 +10,7 @@ import { BASE_URL } from '../../services/apiConfig';
 
 const AdminDashboard = () => {
     const navigation = useNavigation();
-    const [stats, setStats] = useState({ users: 0, songs: 0 });
+    const [stats, setStats] = useState({ users: 0, songs: 0, online: 0 });
     const [loading, setLoading] = useState(true);
 
     const fetchStats = async () => {
@@ -55,19 +55,26 @@ const AdminDashboard = () => {
             </View>
 
             <View style={styles.statsContainer}>
-                <View style={styles.statCard}>
+                <View style={[styles.statCard, { width: '31%' }]}>
                     <View style={[styles.statIconBox, { backgroundColor: 'rgba(67, 24, 255, 0.1)' }]}>
-                        <Ionicons name="people" size={24} color={theme.colors.primary} />
+                        <Ionicons name="people" size={20} color={theme.colors.primary} />
                     </View>
                     <Text style={styles.statNumber}>{stats.users}</Text>
-                    <Text style={styles.statLabel}>Total Users</Text>
+                    <Text style={styles.statLabel}>Total</Text>
                 </View>
-                <View style={styles.statCard}>
+                <View style={[styles.statCard, { width: '31%' }]}>
                     <View style={[styles.statIconBox, { backgroundColor: 'rgba(5, 205, 153, 0.1)' }]}>
-                        <Ionicons name="musical-notes" size={24} color={theme.colors.success} />
+                        <Ionicons name="musical-notes" size={20} color={theme.colors.success} />
                     </View>
                     <Text style={[styles.statNumber, { color: theme.colors.success }]}>{stats.songs}</Text>
-                    <Text style={styles.statLabel}>Total Songs</Text>
+                    <Text style={styles.statLabel}>Songs</Text>
+                </View>
+                <View style={[styles.statCard, { width: '31%' }]}>
+                    <View style={[styles.statIconBox, { backgroundColor: 'rgba(0, 200, 83, 0.1)' }]}>
+                        <Ionicons name="radio" size={20} color="#00C853" />
+                    </View>
+                    <Text style={[styles.statNumber, { color: '#00C853' }]}>{stats.online}</Text>
+                    <Text style={styles.statLabel}>Online</Text>
                 </View>
             </View>
 

@@ -38,15 +38,36 @@ const ManageUsersScreen = () => {
             });
 
             Alert.alert('Success', res.data.msg);
-
-            // Update local state
-            setUsers(users.map(user =>
-                user._id === id ? { ...user, isBanned: res.data.isBanned } : user
-            ));
-
+            fetchUsers();
         } catch (err) {
             Alert.alert('Error', err.response?.data?.msg || 'Action failed');
         }
+    };
+
+    const handleDelete = async (id) => {
+        Alert.alert(
+            'Delete User',
+            'Are you sure? This will delete the user and all their uploaded songs.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const token = await AsyncStorage.getItem('token');
+                            await axios.delete(`${BASE_URL}/api/admin/users/${id}`, {
+                                headers: { 'x-auth-token': token }
+                            });
+                            Alert.alert('Deleted', 'User removed successfully');
+                            fetchUsers();
+                        } catch (err) {
+                            Alert.alert('Error', err.response?.data?.msg || 'Delete failed');
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const renderItem = ({ item }) => (
@@ -57,6 +78,9 @@ const ManageUsersScreen = () => {
             <View style={styles.userInfo}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text style={styles.username}>{item.username}</Text>
+                    {item.currentSessionToken ? (
+                        <View style={styles.onlineDot} />
+                    ) : null}
                     {item.role === 'admin' && (
                         <View style={styles.adminBadge}>
                             <Text style={styles.adminBadgeText}>ADMIN</Text>
@@ -70,12 +94,21 @@ const ManageUsersScreen = () => {
             </View>
 
             {item.role !== 'admin' && (
-                <TouchableOpacity
-                    style={[styles.banButton, { backgroundColor: item.isBanned ? theme.colors.success : theme.colors.error }]}
-                    onPress={() => toggleBan(item._id, item.isBanned)}
-                >
-                    <Text style={styles.btnText}>{item.isBanned ? 'Unban' : 'Ban'}</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                    <TouchableOpacity
+                        style={[styles.actionBtn, { backgroundColor: item.isBanned ? theme.colors.success : '#FFA000', marginRight: 8 }]}
+                        onPress={() => toggleBan(item._id, item.isBanned)}
+                    >
+                        <Ionicons name={item.isBanned ? "checkmark-circle" : "ban"} size={16} color="#fff" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.actionBtn, { backgroundColor: theme.colors.error }]}
+                        onPress={() => handleDelete(item._id)}
+                    >
+                        <Ionicons name="trash" size={16} color="#fff" />
+                    </TouchableOpacity>
+                </View>
             )}
         </View>
     );
@@ -176,14 +209,20 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginTop: 2,
     },
-    banButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 16,
+    actionBtn: {
+        width: 38,
+        height: 38,
         borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    btnText: {
-        color: '#fff',
-        fontWeight: '600',
-        fontSize: 12,
-    },
+    onlineDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#00C853',
+        marginLeft: 6,
+        borderWidth: 1,
+        borderColor: '#fff',
+    }
 });
