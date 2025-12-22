@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   StatusBar,
+  Alert,
 } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -31,6 +32,8 @@ const HomeScreen = () => {
       setSongs(response.data);
     } catch (error) {
       console.error('Error fetching songs:', error);
+      const msg = error.response?.data?.msg || error.message || 'Failed to load songs';
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
       setRefreshing(false);

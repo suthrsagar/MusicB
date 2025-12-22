@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, StatusBar, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, StatusBar, TouchableOpacity, Alert } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -26,7 +26,9 @@ const NotificationScreen = () => {
 
             setLoading(false);
         } catch (err) {
-            console.error(err);
+            console.error('Fetch error:', err);
+            const msg = err.response?.data?.msg || err.message || 'Failed to load notifications';
+            Alert.alert('Error', msg);
             setLoading(false);
         }
     };

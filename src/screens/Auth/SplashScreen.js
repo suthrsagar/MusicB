@@ -55,8 +55,8 @@ const SplashScreen = () => {
 
             <View style={styles.content}>
                 <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY: textAnim }] }}>
-                    <Text style={styles.appName}>MoiveB</Text>
-                    <Text style={styles.tagline}>Pulse of Entertainment</Text>
+                    <Text style={styles.appName}>MusicZ</Text>
+                    <Text style={styles.tagline}>Music for Entertainment</Text>
                 </Animated.View>
             </View>
         </View>

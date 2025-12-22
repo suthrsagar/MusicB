@@ -1,1 +1,1 @@
-export const BASE_URL = 'https://musicbackend-ihnq.onrender.com';
+export const BASE_URL = 'http://10.206.215.196:5000';
