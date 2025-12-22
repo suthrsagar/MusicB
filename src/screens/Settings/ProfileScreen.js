@@ -36,6 +36,7 @@ const ProfileScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [imageUri, setImageUri] = useState(null);
+  const [error, setError] = useState('');
 
   // Password Change State
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -118,7 +119,8 @@ const ProfileScreen = ({ navigation }) => {
       await fetchProfile();
       navigation.replace('Tabs');
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.msg || 'Registration failed');
+      setError(err.response?.data?.msg || 'Registration failed');
+      // Alert.alert('Error', err.response?.data?.msg || 'Registration failed');
     } finally {
       setBtnLoading(false);
     }
@@ -137,7 +139,8 @@ const ProfileScreen = ({ navigation }) => {
       await fetchProfile(res.data.token);
       navigation.replace('Tabs');
     } catch (err) {
-      Alert.alert('Failed', err.response?.data?.msg || 'Login failed');
+      setError(err.response?.data?.msg || 'Login failed');
+      // Alert.alert('Failed', err.response?.data?.msg || 'Login failed');
     } finally {
       setBtnLoading(false);
     }
@@ -343,7 +346,7 @@ const ProfileScreen = ({ navigation }) => {
                   placeholder="Enter email"
                   placeholderTextColor="#999"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(t) => { setEmail(t); setError(''); }}
                   autoCapitalize="none"
                   keyboardType="email-address"
                 />
@@ -360,10 +363,12 @@ const ProfileScreen = ({ navigation }) => {
                   placeholderTextColor="#999"
                   secureTextEntry
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(t) => { setPassword(t); setError(''); }}
                 />
               </View>
             </View>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <TouchableOpacity
               style={[styles.primaryBtn, btnLoading && { opacity: 0.8 }]}
@@ -388,7 +393,7 @@ const ProfileScreen = ({ navigation }) => {
               </Text>
               <TouchableOpacity onPress={() => setIsRegister(!isRegister)}>
                 <Text style={styles.footerLinkText}>
-                  {isRegister ? 'Log In' : 'Join Now'}
+                  {isRegister ? 'Sign In' : 'Create New Account'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -843,5 +848,12 @@ const styles = StyleSheet.create({
   modalInput: { width: '100%', height: 50, borderWidth: 1, borderColor: '#ddd', borderRadius: 12, paddingHorizontal: 15, marginBottom: 15, color: '#000' },
   modalBtnRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 10 },
   modalBtn: { flex: 1, height: 45, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginHorizontal: 5 },
-  modalBtnText: { fontWeight: 'bold', color: '#333' }
+  modalBtnText: { fontWeight: 'bold', color: '#333' },
+  errorText: {
+    color: theme.colors.error,
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 10,
+    fontWeight: '600'
+  }
 });
