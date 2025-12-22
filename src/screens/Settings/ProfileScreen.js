@@ -28,7 +28,7 @@ const API_URL = `${BASE_URL}/api/`;
 
 const ProfileScreen = ({ navigation }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister, setIsRegister] = useState(true); // Default to Create Account
   const [loading, setLoading] = useState(true);
   const [btnLoading, setBtnLoading] = useState(false);
 
@@ -303,7 +303,7 @@ const ProfileScreen = ({ navigation }) => {
 
           <View style={styles.authCard}>
             <Text style={styles.formTitle}>
-              {isRegister ? 'Create Account' : 'Sign In'}
+              {isRegister ? 'Create Account' : 'Login'}
             </Text>
 
             {isRegister && (
@@ -393,7 +393,7 @@ const ProfileScreen = ({ navigation }) => {
               </Text>
               <TouchableOpacity onPress={() => setIsRegister(!isRegister)}>
                 <Text style={styles.footerLinkText}>
-                  {isRegister ? 'Sign In' : 'Create New Account'}
+                  {isRegister ? 'Login' : 'Create New Account'}
                 </Text>
               </TouchableOpacity>
             </View>
