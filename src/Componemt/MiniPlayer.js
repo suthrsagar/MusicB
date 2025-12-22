@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Image, PanResponder, Animated } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { useMusic } from '../context/MusicContext';
@@ -9,17 +9,37 @@ const MiniPlayer = () => {
     const navigation = useNavigation();
     const { currentSong, isPlaying, togglePlayPause, loading, playNext, closePlayer } = useMusic();
 
+    const panResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: (_, gestureState) => {
+                // Only capture vertical gestures
+                return Math.abs(gestureState.dy) > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+            },
+            onPanResponderRelease: (_, gestureState) => {
+                if (gestureState.dy < -30) {
+                    // Swipe Up - Open Player
+                    navigation.navigate('PlayerScreen');
+                }
+            }
+        })
+    ).current;
+
     if (!currentSong) return null;
 
     return (
-        <View style={styles.outerContainer}>
+        <View style={styles.outerContainer} {...panResponder.panHandlers}>
             <TouchableOpacity
                 style={styles.container}
-                onPress={() => navigation.navigate('PlayerScreen')}
+                onPress={() => navigation.navigate('PlayerScreen')} // Keep tap for accessibility
                 activeOpacity={0.9}
             >
                 <View style={styles.artwork}>
-                    <Ionicons name="musical-notes" size={20} color="#fff" />
+                    {currentSong.coverImage ? (
+                        <Image source={{ uri: currentSong.coverImage }} style={styles.coverImage} resizeMode="cover" />
+                    ) : (
+                        <Ionicons name="musical-notes" size={20} color="#fff" />
+                    )}
                 </View>
 
                 <View style={styles.textContainer}>
@@ -76,7 +96,12 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12
+        marginRight: 12,
+        overflow: 'hidden'
+    },
+    coverImage: {
+        width: '100%',
+        height: '100%'
     },
     textContainer: {
         flex: 1,

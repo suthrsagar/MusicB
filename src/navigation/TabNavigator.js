@@ -5,7 +5,7 @@ import { theme } from '../theme';
 
 import HomeScreen from '../screens/Home/HomeScreen';
 import SearchScreen from '../screens/Search/SearchScreen';
-import Premium from '../screens/premium/Premium';
+import PlaylistScreen from '../screens/Playlist/PlaylistScreen';
 import ProfileScreen from '../screens/Settings/ProfileScreen';
 import SettingsScreen from '../screens/Settings/SettingsScreen';
 import Header from '../Componemt/hedder';
@@ -26,8 +26,8 @@ const TabNavigator = () => {
                             iconName = focused ? 'home' : 'home-outline';
                         } else if (route.name === 'Search') {
                             iconName = focused ? 'search' : 'search-outline';
-                        } else if (route.name === 'Premium') {
-                            iconName = focused ? 'diamond' : 'diamond-outline';
+                        } else if (route.name === 'Playlist') {
+                            iconName = focused ? 'musical-notes' : 'musical-notes-outline';
                         } else if (route.name === 'Profile') {
                             iconName = focused ? 'person' : 'person-outline';
                         }
@@ -58,7 +58,7 @@ const TabNavigator = () => {
             >
                 <Tab.Screen name="Home" component={HomeScreen} />
                 <Tab.Screen name="Search" component={SearchScreen} />
-                <Tab.Screen name="Premium" component={Premium} />
+                <Tab.Screen name="Playlist" component={PlaylistScreen} />
                 <Tab.Screen name="Profile" component={ProfileScreen} />
                 <Tab.Screen name="Settings" component={SettingsScreen} />
             </Tab.Navigator>

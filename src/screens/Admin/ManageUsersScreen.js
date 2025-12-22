@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Alert, StatusBar } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Alert, StatusBar, Image } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -10,6 +10,13 @@ import { BASE_URL } from '../../services/apiConfig';
 const ManageUsersScreen = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const getAvatarUrl = (avatarPath) => {
+        if (!avatarPath) return null;
+        if (avatarPath.startsWith('http')) return avatarPath;
+        if (avatarPath.includes('avatar-')) return `${BASE_URL}/api/avatar/${avatarPath}`;
+        return `${BASE_URL}${avatarPath.startsWith('/') ? '' : '/'}${avatarPath}`;
+    };
 
     const fetchUsers = async () => {
         try {
@@ -70,17 +77,70 @@ const ManageUsersScreen = () => {
         );
     };
 
+    const makeAdmin = async (id) => {
+        Alert.alert(
+            'Promote to Admin',
+            'Are you sure you want to make this user an Admin? They will have full access.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Promote',
+                    onPress: async () => {
+                        try {
+                            const token = await AsyncStorage.getItem('token');
+                            const res = await axios.put(`${BASE_URL}/api/admin/users/${id}/make-admin`, {}, {
+                                headers: { 'x-auth-token': token }
+                            });
+                            Alert.alert('Success', res.data.msg);
+                            fetchUsers();
+                        } catch (err) {
+                            Alert.alert('Error', err.response?.data?.msg || 'Promotion failed');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const removeAdmin = async (id) => {
+        Alert.alert(
+            'Remove Admin',
+            'Are you sure? This will remove their admin privileges.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Remove',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const token = await AsyncStorage.getItem('token');
+                            const res = await axios.put(`${BASE_URL}/api/admin/users/${id}/remove-admin`, {}, {
+                                headers: { 'x-auth-token': token }
+                            });
+                            Alert.alert('Success', res.data.msg);
+                            fetchUsers();
+                        } catch (err) {
+                            Alert.alert('Error', err.response?.data?.msg || 'Action failed');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     const renderItem = ({ item }) => (
         <View style={styles.userCard}>
-            <View style={styles.iconBox}>
-                <Ionicons name="person" size={20} color={theme.colors.primary} />
-            </View>
+            {item.avatar ? (
+                <Image source={{ uri: getAvatarUrl(item.avatar) }} style={styles.avatar} />
+            ) : (
+                <View style={styles.iconBox}>
+                    <Ionicons name="person" size={20} color={theme.colors.primary} />
+                </View>
+            )}
+
             <View style={styles.userInfo}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text style={styles.username}>{item.username}</Text>
-                    {item.currentSessionToken ? (
-                        <View style={styles.onlineDot} />
-                    ) : null}
                     {item.role === 'admin' && (
                         <View style={styles.adminBadge}>
                             <Text style={styles.adminBadgeText}>ADMIN</Text>
@@ -88,13 +148,28 @@ const ManageUsersScreen = () => {
                     )}
                 </View>
                 <Text style={styles.email}>{item.email}</Text>
-                <Text style={[styles.statusText, { color: item.isBanned ? theme.colors.error : theme.colors.success }]}>
-                    {item.isBanned ? 'Status: Banned' : 'Status: Active'}
-                </Text>
+                <Text style={styles.userId}>ID: {item._id}</Text>
+
+                <View style={styles.statusRow}>
+                    <View style={[styles.statusDot, { backgroundColor: item.isOnline ? theme.colors.success : '#ccc' }]} />
+                    <Text style={[styles.statusText, { color: item.isOnline ? theme.colors.success : theme.colors.textSecondary }]}>
+                        {item.isOnline ? 'Online' : 'Offline'}
+                    </Text>
+                    <Text style={[styles.statusText, { marginLeft: 10, color: item.isBanned ? theme.colors.error : theme.colors.success }]}>
+                        |  {item.isBanned ? 'Banned' : 'Active'}
+                    </Text>
+                </View>
             </View>
 
-            {item.role !== 'admin' && (
+            {item.role !== 'admin' ? (
                 <View style={{ flexDirection: 'row' }}>
+                    <TouchableOpacity
+                        style={[styles.actionBtn, { backgroundColor: '#2196F3', marginRight: 8 }]}
+                        onPress={() => makeAdmin(item._id)}
+                    >
+                        <Ionicons name="shield-checkmark" size={16} color="#fff" />
+                    </TouchableOpacity>
+
                     <TouchableOpacity
                         style={[styles.actionBtn, { backgroundColor: item.isBanned ? theme.colors.success : '#FFA000', marginRight: 8 }]}
                         onPress={() => toggleBan(item._id, item.isBanned)}
@@ -107,6 +182,15 @@ const ManageUsersScreen = () => {
                         onPress={() => handleDelete(item._id)}
                     >
                         <Ionicons name="trash" size={16} color="#fff" />
+                    </TouchableOpacity>
+                </View>
+            ) : (
+                <View style={{ flexDirection: 'row' }}>
+                    <TouchableOpacity
+                        style={[styles.actionBtn, { backgroundColor: theme.colors.error, marginRight: 8 }]}
+                        onPress={() => removeAdmin(item._id)}
+                    >
+                        <Ionicons name="shield-outline" size={16} color="#fff" />
                     </TouchableOpacity>
                 </View>
             )}
@@ -216,13 +300,27 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    onlineDot: {
+    avatar: {
+        width: 45,
+        height: 45,
+        borderRadius: 22.5,
+        marginRight: 15
+    },
+    userId: {
+        fontSize: 10,
+        color: theme.colors.textSecondary,
+        marginVertical: 2,
+        fontFamily: 'monospace' // Easier to read IDs
+    },
+    statusRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4
+    },
+    statusDot: {
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: '#00C853',
-        marginLeft: 6,
-        borderWidth: 1,
-        borderColor: '#fff',
+        marginRight: 6
     }
 });

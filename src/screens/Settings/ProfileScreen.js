@@ -13,12 +13,15 @@ import {
   PermissionsAndroid,
   Linking,
   StatusBar,
+  Modal,
 } from 'react-native';
+import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
+import { useMusic } from '../../context/MusicContext';
 
 import { BASE_URL } from '../../services/apiConfig';
 const API_URL = `${BASE_URL}/api/`;
@@ -34,7 +37,15 @@ const ProfileScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [imageUri, setImageUri] = useState(null);
 
+  // Password Change State
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   const [profile, setProfile] = useState(null);
+
+  const { closePlayer } = useMusic();
 
   const api = axios.create({ baseURL: API_URL });
 
@@ -123,7 +134,7 @@ const ProfileScreen = ({ navigation }) => {
       const res = await api.post('login', { email, password });
       await AsyncStorage.setItem('token', res.data.token);
       setIsLoggedIn(true);
-      await fetchProfile();
+      await fetchProfile(res.data.token);
       navigation.replace('Tabs');
     } catch (err) {
       Alert.alert('Failed', err.response?.data?.msg || 'Login failed');
@@ -132,10 +143,22 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (explicitToken) => {
     try {
       const res = await api.get('profile');
       setProfile(res.data);
+
+      // Manage Admin Topic Subscription
+      try {
+        if (res.data.role === 'admin') {
+          await messaging().subscribeToTopic('admin_notifications');
+        } else {
+          try {
+            await messaging().unsubscribeFromTopic('admin_notifications');
+          } catch (e) { }
+        }
+      } catch (e) { console.log('Topic Sub Error', e); }
+
     } catch (err) {
       console.error('Fetch Profile Error:', err);
       if (err.response?.status === 401 || err.response?.status === 404) {
@@ -151,6 +174,10 @@ const ProfileScreen = ({ navigation }) => {
     setIsLoggedIn(false);
     setProfile(null);
     setUsername(''); setEmail(''); setPassword(''); setImageUri(null);
+    try {
+      closePlayer(); // Stop playback using Context
+      await messaging().unsubscribeFromTopic('admin_notifications');
+    } catch (e) { }
     navigation.reset({ index: 0, routes: [{ name: 'LoginProfile' }] });
   };
 
@@ -206,6 +233,35 @@ const ProfileScreen = ({ navigation }) => {
         }
       }
     });
+  };
+
+  const handleChangePassword = async () => {
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      Alert.alert('Error', 'Please fill all fields');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Error', 'New passwords do not match');
+      return;
+    }
+    if (newPassword.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+
+    setBtnLoading(true);
+    try {
+      await api.post('change-password', { oldPassword, newPassword });
+      Alert.alert('Success', 'Password updated successfully');
+      setShowPasswordModal(false);
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.msg || 'Failed to update password');
+    } finally {
+      setBtnLoading(false);
+    }
   };
 
   if (loading) {
@@ -421,27 +477,16 @@ const ProfileScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Library Buttons */}
+      {/* Settings Options */}
       <View style={{ width: '85%', marginBottom: 20 }}>
         <TouchableOpacity
           style={styles.menuItem}
-          onPress={() => Alert.alert('Coming Soon', 'Playlists feature is under development!')}
+          onPress={() => setShowPasswordModal(true)}
         >
-          <View style={[styles.menuIconBox, { backgroundColor: '#E8EAF6' }]}>
-            <Ionicons name="list" size={22} color={theme.colors.primary} />
+          <View style={[styles.menuIconBox, { backgroundColor: '#E3F2FD' }]}>
+            <Ionicons name="key" size={22} color="#1565C0" />
           </View>
-          <Text style={styles.menuText}>My Playlists</Text>
-          <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.menuItem, { marginTop: 10 }]}
-          onPress={() => Alert.alert('Coming Soon', 'Liked Songs feature is under development!')}
-        >
-          <View style={[styles.menuIconBox, { backgroundColor: '#FFEBEE' }]}>
-            <Ionicons name="heart" size={22} color={theme.colors.error} />
-          </View>
-          <Text style={styles.menuText}>Liked Songs</Text>
+          <Text style={styles.menuText}>Change Password</Text>
           <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
         </TouchableOpacity>
       </View>
@@ -456,6 +501,9 @@ const ProfileScreen = ({ navigation }) => {
 
 
 
+      {/* Spacer to push logout to bottom if needed */}
+      <View style={{ flex: 1 }} />
+
       {/* Logout Button */}
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={22} color={theme.colors.error} style={{ marginRight: 10 }} />
@@ -463,6 +511,59 @@ const ProfileScreen = ({ navigation }) => {
       </TouchableOpacity>
 
       <Text style={styles.versionText}>App Version 1.0.0</Text>
+
+      {/* Password Change Modal */}
+      <Modal
+        visible={showPasswordModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowPasswordModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Change Password</Text>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Current Password"
+              secureTextEntry
+              value={oldPassword}
+              onChangeText={setOldPassword}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="New Password"
+              secureTextEntry
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Confirm New Password"
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: '#ccc' }]}
+                onPress={() => setShowPasswordModal(false)}
+              >
+                <Text style={styles.modalBtnText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: theme.colors.primary }]}
+                onPress={handleChangePassword}
+                disabled={btnLoading}
+              >
+                {btnLoading ? <ActivityIndicator color="#fff" /> : <Text style={[styles.modalBtnText, { color: '#fff' }]}>Update</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -734,4 +835,13 @@ const styles = StyleSheet.create({
   aboutName: { fontSize: 18, fontWeight: 'bold', color: theme.colors.text },
   aboutRole: { fontSize: 14, color: theme.colors.textSecondary, marginBottom: 2 },
   aboutInsta: { fontSize: 14, color: theme.colors.primary, fontWeight: '600' },
+
+  // Modal Styles
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalContent: { width: '85%', backgroundColor: '#fff', borderRadius: 20, padding: 20, alignItems: 'center', elevation: 5 },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20, color: theme.colors.text },
+  modalInput: { width: '100%', height: 50, borderWidth: 1, borderColor: '#ddd', borderRadius: 12, paddingHorizontal: 15, marginBottom: 15, color: '#000' },
+  modalBtnRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 10 },
+  modalBtn: { flex: 1, height: 45, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginHorizontal: 5 },
+  modalBtnText: { fontWeight: 'bold', color: '#333' }
 });

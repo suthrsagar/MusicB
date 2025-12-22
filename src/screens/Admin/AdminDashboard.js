@@ -122,6 +122,20 @@ const AdminDashboard = () => {
                     </View>
                     <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => navigation.navigate('AdminFeedbackScreen')}
+                >
+                    <View style={[styles.menuIconBox, { backgroundColor: 'rgba(33, 150, 243, 0.1)' }]}>
+                        <Ionicons name="chatbubbles-outline" size={28} color="#2196F3" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.menuText}>Support Messages</Text>
+                        <Text style={styles.menuSubText}>View and reply to user chats</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
             </View>
 
             <Text style={styles.sectionHeader}>Business & Analytics</Text>

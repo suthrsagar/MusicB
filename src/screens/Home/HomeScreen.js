@@ -9,6 +9,7 @@ import {
   RefreshControl,
   StatusBar,
   Alert,
+  Image,
 } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -65,7 +66,15 @@ const HomeScreen = () => {
       activeOpacity={0.9}
     >
       <View style={styles.cardImageContainer}>
-        <Ionicons name="musical-notes" size={40} color="#fff" />
+        {item.coverImage ? (
+          <Image
+            source={{ uri: item.coverImage }}
+            style={styles.coverImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <Ionicons name="musical-notes" size={40} color="#fff" />
+        )}
       </View>
       <View style={styles.cardContent}>
         <Text style={styles.songTitle} numberOfLines={1}>
@@ -92,7 +101,7 @@ const HomeScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
-      <Text style={styles.header}>Discover</Text>
+      <Text style={styles.header}>New Songs </Text>
       {songs.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="musical-note-outline" size={60} color={theme.colors.textSecondary} />
@@ -165,6 +174,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopLeftRadius: theme.layout.borderRadius,
     borderTopRightRadius: theme.layout.borderRadius,
+    overflow: 'hidden'
+  },
+  coverImage: {
+    width: '100%',
+    height: '100%'
   },
   cardContent: {
     padding: 12,

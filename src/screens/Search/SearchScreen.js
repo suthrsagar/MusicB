@@ -36,11 +36,11 @@ export default function SearchScreen() {
       setFilteredSongs(allSongs);
     } else {
       const lowerQuery = query.toLowerCase();
-      const filtered = allSongs.filter(
-        (song) =>
-          song.title.toLowerCase().includes(lowerQuery) ||
-          song.artist.toLowerCase().includes(lowerQuery)
-      );
+      const filtered = allSongs.filter((song) => {
+        const titleMatch = song.title?.toLowerCase().includes(lowerQuery);
+        const artistMatch = song.artist?.toLowerCase().includes(lowerQuery);
+        return titleMatch || artistMatch;
+      });
       setFilteredSongs(filtered);
     }
   }, [query, allSongs]);
@@ -74,7 +74,7 @@ export default function SearchScreen() {
         <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
         <TextInput
           style={styles.input}
-          placeholder="Search songs, artists..."
+          placeholder="Search by Song or Artist..."
           placeholderTextColor={theme.colors.textSecondary}
           value={query}
           onChangeText={setQuery}

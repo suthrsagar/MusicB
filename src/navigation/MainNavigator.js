@@ -19,7 +19,13 @@ import NotificationScreen from '../screens/Notifications/NotificationScreen';
 import SendNotificationScreen from '../screens/Admin/SendNotificationScreen';
 import MonetizationScreen from '../screens/Admin/MonetizationScreen';
 import AnalyticsScreen from '../screens/Admin/AnalyticsScreen';
+
 import SplashScreen from '../screens/Auth/SplashScreen';
+import SupportChatScreen from '../screens/Settings/SupportChatScreen';
+import AdminFeedbackScreen from '../screens/Admin/AdminFeedbackScreen';
+import AdminChatScreen from '../screens/Admin/AdminChatScreen';
+import Premium from '../screens/premium/Premium';
+import PlaylistDetailScreen from '../screens/Playlist/PlaylistDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -154,7 +160,32 @@ const MainNavigator = () => {
                 component={AnalyticsScreen}
                 options={{ headerShown: false }}
             />
+            <Stack.Screen
+                name="SupportChatScreen"
+                component={SupportChatScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="AdminFeedbackScreen"
+                component={AdminFeedbackScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="AdminChatScreen"
+                component={AdminChatScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="Premium"
+                component={Premium}
+                options={{ headerShown: false }}
+            />
 
+            <Stack.Screen
+                name="PlaylistDetailScreen"
+                component={PlaylistDetailScreen}
+                options={{ headerShown: false }}
+            />
         </Stack.Navigator>
     );
 };

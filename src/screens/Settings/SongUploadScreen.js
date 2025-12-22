@@ -11,6 +11,7 @@ import {
   StatusBar
 } from 'react-native';
 import { pick, types, isCancel } from '@react-native-documents/picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
@@ -24,8 +25,9 @@ const SongUploadScreen = () => {
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [album, setAlbum] = useState('');
-  const [genre, setGenre] = useState('');
+  // Genre removed as per request
   const [file, setFile] = useState(null);
+  const [coverImage, setCoverImage] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const [isLoggedIn, setIsLoggedIn] = useState(true); // Default to true to avoid flicker if token exists
@@ -76,6 +78,15 @@ const SongUploadScreen = () => {
     }
   };
 
+  const handlePickCover = () => {
+    launchImageLibrary({ mediaType: 'photo', quality: 0.8 }, res => {
+      if (res.didCancel) return;
+      if (res.assets?.length) {
+        setCoverImage(res.assets[0]);
+      }
+    });
+  };
+
   const handleUpload = async () => {
     if (!file) {
       Alert.alert('Validation Error', 'Please pick an audio file.');
@@ -102,10 +113,17 @@ const SongUploadScreen = () => {
         name: file.name,
         type: file.type || 'audio/mpeg',
       });
+      if (coverImage) {
+        formData.append('coverImage', {
+          uri: coverImage.uri,
+          type: coverImage.type || 'image/jpeg',
+          name: coverImage.fileName || 'cover.jpg'
+        });
+      }
+
       formData.append('title', title);
       formData.append('artist', artist);
       if (album) formData.append('album', album);
-      if (genre) formData.append('genre', genre);
 
       const response = await axios.post(`${BASE_URL}/api/song/upload`, formData, {
         headers: {
@@ -134,8 +152,8 @@ const SongUploadScreen = () => {
     setTitle('');
     setArtist('');
     setAlbum('');
-    setGenre('');
     setFile(null);
+    setCoverImage(null);
   };
 
   return (
@@ -153,7 +171,7 @@ const SongUploadScreen = () => {
         <Text style={styles.sectionTitle}>Song Information</Text>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Song Title *</Text>
+          <Text style={styles.label}>Enter Song Name *</Text>
           <TextInput
             style={[styles.input, !isLoggedIn && { opacity: 0.5 }]}
             value={title}
@@ -188,18 +206,19 @@ const SongUploadScreen = () => {
               editable={isLoggedIn}
             />
           </View>
-          <View style={[styles.inputGroup, { flex: 1 }]}>
-            <Text style={styles.label}>Genre (Opt)</Text>
-            <TextInput
-              style={[styles.input, !isLoggedIn && { opacity: 0.5 }]}
-              value={genre}
-              onChangeText={setGenre}
-              placeholder="e.g. Pop"
-              placeholderTextColor={theme.colors.textSecondary}
-              editable={isLoggedIn}
-            />
-          </View>
         </View>
+
+        <Text style={styles.sectionTitle}>Song Cover (Optional)</Text>
+        <TouchableOpacity
+          style={[styles.pickButton, !isLoggedIn && styles.disabledButton]}
+          onPress={handlePickCover}
+          disabled={!isLoggedIn}
+        >
+          <Ionicons name={coverImage ? "image" : "image-outline"} size={24} color={coverImage ? theme.colors.success : isLoggedIn ? theme.colors.primary : theme.colors.textSecondary} />
+          <Text style={[styles.pickButtonText, coverImage && { color: theme.colors.success }, !isLoggedIn && { color: theme.colors.textSecondary }]}>
+            {coverImage ? 'Cover Selected' : 'Choose Cover Image'}
+          </Text>
+        </TouchableOpacity>
 
         <Text style={styles.sectionTitle}>Audio File</Text>
         <TouchableOpacity

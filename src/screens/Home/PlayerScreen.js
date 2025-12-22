@@ -9,7 +9,9 @@ import {
   Alert,
   PermissionsAndroid,
   Image,
-  Platform
+  Platform,
+  Modal,
+  FlatList
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import Slider from '@react-native-community/slider';
@@ -38,6 +40,27 @@ const PlayerScreen = ({ route, navigation }) => {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [viewsCount, setViewsCount] = useState(0);
+
+  const [sleepTimer, setSleepTimer] = useState(null);
+  const [showSleepModal, setShowSleepModal] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    if (sleepTimer !== null && isPlaying) {
+      if (sleepTimer === 'end') {
+        // Logic handled in track player event or just let it finish
+        // For simple handling if not infinite loop:
+      } else {
+        const ms = sleepTimer * 60 * 1000;
+        timer = setTimeout(() => {
+          if (isPlaying) togglePlayPause();
+          setSleepTimer(null);
+          Alert.alert('Sleep Timer', 'Music stopped.');
+        }, ms);
+      }
+    }
+    return () => clearTimeout(timer);
+  }, [sleepTimer, isPlaying]);
 
 
   useEffect(() => {
@@ -183,11 +206,136 @@ const PlayerScreen = ({ route, navigation }) => {
       'Options',
       'Select an action',
       [
+        { text: 'Sleep Timer', onPress: () => setShowSleepModal(true) },
+        { text: 'Add to Playlist', onPress: fetchPlaylists },
         { text: 'Download Song', onPress: downloadSong },
         { text: 'Cancel', style: 'cancel' }
       ]
     );
   };
+
+  const renderSleepTimerModal = () => (
+    <Modal
+      transparent={true}
+      visible={showSleepModal}
+      animationType="fade"
+      onRequestClose={() => setShowSleepModal(false)}
+    >
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowSleepModal(false)}
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Sleep Timer</Text>
+
+          {[
+            { label: 'Off', value: null },
+            { label: '10 Minutes', value: 10 },
+            { label: '30 Minutes', value: 30 },
+            { label: '60 Minutes', value: 60 },
+          ].map((option) => (
+            <TouchableOpacity
+              key={option.label}
+              style={[
+                styles.modalOption,
+                sleepTimer === option.value && styles.modalOptionSelected
+              ]}
+              onPress={() => {
+                setSleepTimer(option.value);
+                setShowSleepModal(false);
+                if (option.value) Alert.alert('Sleep Timer Set', `Playback will stop in ${option.label}`);
+              }}
+            >
+              <Text style={[
+                styles.modalOptionText,
+                sleepTimer === option.value && styles.modalOptionTextSelected
+              ]}>{option.label}</Text>
+              {sleepTimer === option.value && (
+                <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+
+  // --- PLAYLIST LOGIC ---
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [myPlaylists, setMyPlaylists] = useState([]);
+
+  const fetchPlaylists = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        Alert.alert('Login Required', 'Please login to add to playlist.');
+        return;
+      }
+      const res = await axios.get(`${BASE_URL}/api/playlist/me`, {
+        headers: { 'x-auth-token': token }
+      });
+      setMyPlaylists(res.data);
+      setShowPlaylistModal(true);
+    } catch (e) {
+      Alert.alert('Error', 'Could not fetch playlists');
+    }
+  };
+
+  const addToPlaylist = async (playlistId) => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      await axios.put(`${BASE_URL}/api/playlist/add/${playlistId}`,
+        { songId: activeSong._id },
+        { headers: { 'x-auth-token': token } }
+      );
+      Alert.alert('Success', 'Song added to playlist');
+      setShowPlaylistModal(false);
+    } catch (e) {
+      Alert.alert('Error', 'Could not add to playlist');
+    }
+  };
+
+  const renderPlaylistModal = () => (
+    <Modal
+      transparent={true}
+      visible={showPlaylistModal}
+      animationType="slide"
+      onRequestClose={() => setShowPlaylistModal(false)}
+    >
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowPlaylistModal(false)}
+      >
+        <View style={[styles.modalContent, { maxHeight: '60%' }]}>
+          <Text style={styles.modalTitle}>Add to Playlist</Text>
+          {myPlaylists.length === 0 ? (
+            <Text style={{ textAlign: 'center', marginVertical: 20, color: theme.colors.textSecondary }}>No playlists found. Create one in the Playlist tab.</Text>
+          ) : (
+            <FlatList
+              data={myPlaylists}
+              keyExtractor={item => item._id}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.modalOption} onPress={() => addToPlaylist(item._id)}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 15 }}>
+                      <Ionicons name="musical-note" size={20} color="#fff" />
+                    </View>
+                    <View>
+                      <Text style={styles.modalOptionText}>{item.name}</Text>
+                      <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>{item.songs?.length || 0} Songs</Text>
+                    </View>
+                  </View>
+                  <Ionicons name="add-circle-outline" size={24} color={theme.colors.primary} />
+                </TouchableOpacity>
+              )}
+            />
+          )}
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
 
   return (
     <View style={styles.container}>
@@ -199,15 +347,21 @@ const PlayerScreen = ({ route, navigation }) => {
           <Ionicons name="chevron-down" size={30} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Now Playing</Text>
-        <TouchableOpacity style={styles.iconButton} onPress={handleMenu}>
-          <Ionicons name="ellipsis-horizontal" size={30} color={theme.colors.text} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row' }}>
+          <TouchableOpacity style={styles.iconButton} onPress={downloadSong}>
+            <Ionicons name="cloud-download-outline" size={28} color={theme.colors.text} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Album Art Placeholder */}
       <View style={styles.artworkContainer}>
         <View style={styles.artwork}>
-          <Ionicons name="musical-notes" size={100} color="#fff" />
+          {activeSong.coverImage ? (
+            <Image source={{ uri: activeSong.coverImage }} style={styles.coverImage} resizeMode="cover" />
+          ) : (
+            <Ionicons name="musical-notes" size={100} color="#fff" />
+          )}
         </View>
       </View>
 
@@ -272,6 +426,21 @@ const PlayerScreen = ({ route, navigation }) => {
           <Ionicons name="play-skip-forward" size={30} color={theme.colors.text} />
         </TouchableOpacity>
       </View>
+
+      {/* Footer Options */}
+      <View style={styles.footerOptions}>
+        <TouchableOpacity style={styles.footerBtn} onPress={fetchPlaylists}>
+          <Ionicons name="add-circle-outline" size={26} color={theme.colors.text} />
+          <Text style={styles.footerBtnText}>Playlist</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.footerBtn} onPress={() => setShowSleepModal(true)}>
+          <Ionicons name="timer-outline" size={26} color={theme.colors.text} />
+          <Text style={styles.footerBtnText}>Timer</Text>
+        </TouchableOpacity>
+      </View>
+      {renderSleepTimerModal()}
+      {renderPlaylistModal()}
     </View>
   );
 };
@@ -319,6 +488,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.4,
     shadowRadius: 20,
+    overflow: 'hidden', // Ensure image clips to borderRadius
+  },
+  coverImage: {
+    width: '100%',
+    height: '100%'
   },
   infoContainer: {
     alignItems: 'center',
@@ -375,5 +549,62 @@ const styles = StyleSheet.create({
   },
   secondaryControl: {
     padding: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: theme.colors.surface,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: theme.colors.text
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0'
+  },
+  modalOptionSelected: {
+    backgroundColor: theme.colors.primary + '10', // 10% opacity hex
+    paddingHorizontal: 10,
+    marginHorizontal: -10,
+    borderRadius: 10,
+    borderBottomWidth: 0
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: theme.colors.text,
+  },
+  modalOptionTextSelected: {
+    color: theme.colors.primary,
+    fontWeight: 'bold'
+  },
+  footerOptions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+    paddingHorizontal: 30
+  },
+  footerBtn: {
+    alignItems: 'center',
+    padding: 10
+  },
+  footerBtnText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 5,
+    fontWeight: '600'
   }
 });
