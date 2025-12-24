@@ -16,6 +16,7 @@ import {
 import RNFS from 'react-native-fs';
 import Slider from '@react-native-community/slider';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import VolumeController from '../../components/VolumeController';
 import { theme } from '../../theme';
 import { useMusic } from '../../context/MusicContext';
 import axios from 'axios';
@@ -49,7 +50,6 @@ const PlayerScreen = ({ route, navigation }) => {
     if (sleepTimer !== null && isPlaying) {
       if (sleepTimer === 'end') {
         // Logic handled in track player event or just let it finish
-        // For simple handling if not infinite loop:
       } else {
         const ms = sleepTimer * 60 * 1000;
         timer = setTimeout(() => {
@@ -69,16 +69,13 @@ const PlayerScreen = ({ route, navigation }) => {
         playSong(song, playlist || []);
       }
     }
-  }, [song]); // Only run when the route param 'song' changes
-
+  }, [song]);
 
   if (!currentSong && !song) {
     return null;
   }
 
-
   const activeSong = currentSong || song;
-
 
   useEffect(() => {
     const fetchSongDetails = async () => {
@@ -169,7 +166,6 @@ const PlayerScreen = ({ route, navigation }) => {
       const streamUrl = `${BASE_URL}/api/song/stream/${activeSong.fileId}`;
       const token = await AsyncStorage.getItem('token');
 
-      // 3. Start Download
       Alert.alert('Downloading', `Started downloading ${activeSong.title}...`);
 
       const options = {
@@ -179,10 +175,8 @@ const PlayerScreen = ({ route, navigation }) => {
         background: true,
         discretionary: true,
         begin: (res) => {
-          // console.log('Download has begun', res);
         },
         progress: (res) => {
-          // console.log((res.bytesWritten / res.contentLength));
         }
       };
 
@@ -199,19 +193,6 @@ const PlayerScreen = ({ route, navigation }) => {
       console.error(e);
       Alert.alert('Error', 'An error occurred while downloading.');
     }
-  };
-
-  const handleMenu = () => {
-    Alert.alert(
-      'Options',
-      'Select an action',
-      [
-        { text: 'Sleep Timer', onPress: () => setShowSleepModal(true) },
-        { text: 'Add to Playlist', onPress: fetchPlaylists },
-        { text: 'Download Song', onPress: downloadSong },
-        { text: 'Cancel', style: 'cancel' }
-      ]
-    );
   };
 
   const renderSleepTimerModal = () => (
@@ -488,7 +469,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.4,
     shadowRadius: 20,
-    overflow: 'hidden', // Ensure image clips to borderRadius
+    overflow: 'hidden',
   },
   coverImage: {
     width: '100%',
@@ -577,7 +558,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0'
   },
   modalOptionSelected: {
-    backgroundColor: theme.colors.primary + '10', // 10% opacity hex
+    backgroundColor: theme.colors.primary + '10',
     paddingHorizontal: 10,
     marginHorizontal: -10,
     borderRadius: 10,

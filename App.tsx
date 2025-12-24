@@ -9,6 +9,7 @@ import { PermissionsAndroid, Platform, ToastAndroid, Alert, AppState } from 'rea
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from './src/services/apiConfig';
+import VolumeController from './src/components/VolumeController';
 
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -131,6 +132,7 @@ const App = () => {
         <NavigationContainer ref={navigationRef}>
           <MainNavigator />
         </NavigationContainer>
+        <VolumeController />
       </MusicProvider>
     </SafeAreaProvider>
   );
