@@ -60,6 +60,10 @@ const Header = () => {
                     </View>
                 </View>
 
+                <TouchableOpacity style={[styles.iconBtn, { marginRight: 10 }]} onPress={() => navigation.navigate('Search')}>
+                    <Icon name="search-outline" size={26} color={theme.colors.text} />
+                </TouchableOpacity>
+
                 <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('NotificationScreen')}>
                     <Icon name="notifications-outline" size={26} color={theme.colors.text} />
                     {hasUnread && <View style={styles.badge} />}

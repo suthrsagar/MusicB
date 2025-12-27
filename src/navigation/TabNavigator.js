@@ -4,14 +4,16 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { theme } from '../theme';
 
 import HomeScreen from '../screens/Home/HomeScreen';
-import SearchScreen from '../screens/Search/SearchScreen';
+
 import PlaylistScreen from '../screens/Playlist/PlaylistScreen';
 import ProfileScreen from '../screens/Settings/ProfileScreen';
 import SettingsScreen from '../screens/Settings/SettingsScreen';
 import Header from '../Componemt/hedder';
 
 import { View } from 'react-native';
+import { View } from 'react-native';
 import MiniPlayer from '../Componemt/MiniPlayer';
+import DownloadScreen from '../screens/Downloads/DownloadScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -33,6 +35,10 @@ const TabNavigator = () => {
                         }
                         else if (route.name === 'Settings') {
                             iconName = focused ? 'settings' : 'settings-outline';
+                        } else if (route.name === 'Settings') {
+                            iconName = focused ? 'settings' : 'settings-outline';
+                        } else if (route.name === 'Downloads') {
+                            iconName = focused ? 'cloud-download' : 'cloud-download-outline';
                         }
 
                         return <Icon name={iconName} size={size} color={color} />;
@@ -56,11 +62,11 @@ const TabNavigator = () => {
                     headerShown: true,
                 })}
             >
-                <Tab.Screen name="Home" component={HomeScreen} />
-                <Tab.Screen name="Search" component={SearchScreen} />
-                <Tab.Screen name="Playlist" component={PlaylistScreen} />
-                <Tab.Screen name="Profile" component={ProfileScreen} />
                 <Tab.Screen name="Settings" component={SettingsScreen} />
+                <Tab.Screen name="Home" component={HomeScreen} />
+                <Tab.Screen name="Playlist" component={PlaylistScreen} />
+                <Tab.Screen name="Downloads" component={DownloadScreen} />
+                <Tab.Screen name="Profile" component={ProfileScreen} />
             </Tab.Navigator>
             <MiniPlayer />
         </View>

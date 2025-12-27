@@ -73,7 +73,13 @@ export default function SearchScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
-      <Text style={styles.header}>Search</Text>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Search</Text>
+        <View style={{ width: 24 }} />
+      </View>
 
       <View style={styles.searchBarContainer}>
         <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
@@ -83,6 +89,7 @@ export default function SearchScreen() {
           placeholderTextColor={theme.colors.textSecondary}
           value={query}
           onChangeText={setQuery}
+          autoFocus={true}
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => setQuery('')}>
@@ -121,11 +128,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
   },
-  header: {
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    marginTop: 10
+  },
+  headerTitle: {
     ...theme.typography.header,
     color: theme.colors.text,
-    marginBottom: 20,
-    marginTop: 10,
+    fontSize: 24,
+    marginBottom: 0
   },
   searchBarContainer: {
     flexDirection: 'row',
