@@ -25,12 +25,12 @@ const SongUploadScreen = () => {
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [album, setAlbum] = useState('');
-  // Genre removed as per request
+
   const [file, setFile] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // Default to true to avoid flicker if token exists
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {

@@ -13,12 +13,12 @@ const MiniPlayer = () => {
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
             onMoveShouldSetPanResponder: (_, gestureState) => {
-                // Only capture vertical gestures
+
                 return Math.abs(gestureState.dy) > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
             },
             onPanResponderRelease: (_, gestureState) => {
                 if (gestureState.dy < -30) {
-                    // Swipe Up - Open Player
+
                     navigation.navigate('PlayerScreen');
                 }
             }
@@ -31,7 +31,7 @@ const MiniPlayer = () => {
         <View style={styles.outerContainer} {...panResponder.panHandlers}>
             <TouchableOpacity
                 style={styles.container}
-                onPress={() => navigation.navigate('PlayerScreen')} // Keep tap for accessibility
+                onPress={() => navigation.navigate('PlayerScreen')}
                 activeOpacity={0.9}
             >
                 <View style={styles.artwork}>

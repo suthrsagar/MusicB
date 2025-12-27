@@ -20,7 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../services/apiConfig';
 
 const Premium = () => {
-  const [selectedPlan, setSelectedPlan] = useState('monthly'); // 'monthly' | 'yearly'
+  const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [loading, setLoading] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [utr, setUtr] = useState('');
@@ -37,8 +37,7 @@ const Premium = () => {
 
     try {
       await Linking.openURL(upiUrl);
-      // After opening (or trying), we show the verification modal immediately
-      // expecting user to come back after payment.
+
       setLoading(false);
       setShowVerifyModal(true);
     } catch (err) {
@@ -69,7 +68,7 @@ const Premium = () => {
     setVerifyLoading(true);
     try {
       const token = await AsyncStorage.getItem('token');
-      // Call backend to verify
+
       const res = await axios.post(`${BASE_URL}/api/payment/verify`,
         { utr, plan: selectedPlan },
         { headers: { 'x-auth-token': token } }
@@ -129,7 +128,7 @@ const Premium = () => {
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Header Section */}
+
         <View style={styles.headerSection}>
           <View style={styles.iconContainer}>
             <Ionicons name="diamond" size={60} color="#fff" />
@@ -140,7 +139,7 @@ const Premium = () => {
           </Text>
         </View>
 
-        {/* Plans Section */}
+
         <Text style={styles.sectionTitle}>Choose your plan</Text>
 
         <PlanCard
@@ -156,7 +155,7 @@ const Premium = () => {
           recommended={true}
         />
 
-        {/* Features List */}
+
         <View style={styles.featuresContainer}>
           <FeatureItem icon="musical-notes" text="Ad-free music listening" />
           <FeatureItem icon="download" text="Unlimited offline downloads" />
@@ -164,7 +163,7 @@ const Premium = () => {
           <FeatureItem icon="play-skip-forward" text="Unlimited skips" />
         </View>
 
-        {/* Subscribe Button */}
+
         <TouchableOpacity
           style={styles.subscribeBtn}
           onPress={handleSubscribe}
@@ -186,7 +185,7 @@ const Premium = () => {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Verification Modal */}
+
       <Modal visible={showVerifyModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.verifyCard}>
@@ -214,7 +213,7 @@ const Premium = () => {
         </View>
       </Modal>
 
-      {/* Success Modal */}
+
       <Modal visible={showSuccess} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.successCard}>
@@ -302,7 +301,7 @@ const styles = StyleSheet.create({
   },
   selectedCard: {
     borderColor: theme.colors.primary,
-    backgroundColor: '#F4F7FE' // Light blue tint
+    backgroundColor: '#F4F7FE'
   },
   recommendedBadge: {
     position: 'absolute',
@@ -398,7 +397,7 @@ const styles = StyleSheet.create({
     marginTop: 15
   },
 
-  // Modal
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',

@@ -27,7 +27,7 @@ const SupportChatScreen = ({ navigation }) => {
 
     useEffect(() => {
         fetchChat();
-        // Poll for new messages every 5 seconds
+
         const interval = setInterval(fetchChat, 5000);
         return () => clearInterval(interval);
     }, []);
@@ -42,11 +42,7 @@ const SupportChatScreen = ({ navigation }) => {
             });
 
             if (res.data && res.data.messages) {
-                // Sort by date descending for inverted list, or ascending?
-                // Usually chat lists are bottom-up.
-                // Let's keep them in order and use inverted FlatList if desired,
-                // or just standard list and scroll to bottom. 
-                // Let's store as received (ascending)
+
                 setMessages(res.data.messages);
             }
             setLoading(false);
@@ -66,7 +62,7 @@ const SupportChatScreen = ({ navigation }) => {
             _temp: true
         };
 
-        // Optimistic update
+
         setMessages(prev => [...prev, tempMsg]);
         setInputText('');
         setSending(true);
@@ -76,7 +72,7 @@ const SupportChatScreen = ({ navigation }) => {
             await axios.post(`${BASE_URL}/api/support/send`, { text: tempMsg.text }, {
                 headers: { 'x-auth-token': token }
             });
-            fetchChat(); // Refresh to get real message
+            fetchChat();
         } catch (err) {
             console.error(err);
             Alert.alert('Error', 'Message not sent');
@@ -215,7 +211,7 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: '#00C853', // Green
+        backgroundColor: '#00C853',
         marginRight: 6
     },
     statusText: {
@@ -294,7 +290,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F7F7F7',
         borderRadius: 20,
         paddingHorizontal: 15,
-        paddingVertical: 10, // IOS multiline fix
+        paddingVertical: 10,
         maxHeight: 100,
         marginRight: 10,
         color: theme.colors.text,

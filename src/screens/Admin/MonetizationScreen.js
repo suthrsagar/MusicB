@@ -10,18 +10,18 @@ import { BASE_URL } from '../../services/apiConfig';
 
 const MonetizationScreen = () => {
     const navigation = useNavigation();
-    const [activeTab, setActiveTab] = useState('ads'); // ads | plans | payouts
+    const [activeTab, setActiveTab] = useState('ads');
     const [loading, setLoading] = useState(false);
 
-    // Ads State
+
     const [adConfig, setAdConfig] = useState(null);
 
-    // Plans State
+
     const [plans, setPlans] = useState([]);
     const [showPlanModal, setShowPlanModal] = useState(false);
     const [newPlan, setNewPlan] = useState({ name: '', price: '', durationDays: '' });
 
-    // Payouts State
+
     const [payouts, setPayouts] = useState([]);
 
     useEffect(() => {
@@ -36,8 +36,7 @@ const MonetizationScreen = () => {
 
             if (activeTab === 'ads') {
                 const res = await axios.get(`${BASE_URL}/api/monetization/ads`, { headers: headers || {} });
-                // Note: Ads endpoint is public but good to use auth if available or just fetch without for public. 
-                // But wait, the GET route I made is public.
+
                 setAdConfig(res.data);
             } else if (activeTab === 'plans') {
                 const res = await axios.get(`${BASE_URL}/api/monetization/plans`);
@@ -53,7 +52,7 @@ const MonetizationScreen = () => {
         }
     };
 
-    // --- ADS HANDLERS ---
+
     const toggleAdMaster = async (val) => {
         try {
             const token = await AsyncStorage.getItem('token');
@@ -65,7 +64,7 @@ const MonetizationScreen = () => {
         } catch (err) { Alert.alert('Error', 'Failed to update'); }
     };
 
-    // --- PLANS HANDLERS ---
+
     const createPlan = async () => {
         if (!newPlan.name || !newPlan.price || !newPlan.durationDays) return Alert.alert('Error', 'Fill all fields');
         try {
@@ -81,7 +80,7 @@ const MonetizationScreen = () => {
         } catch (err) { Alert.alert('Error', 'Failed to create plan'); }
     };
 
-    // --- PAYOUTS HANDLERS ---
+
     const handlePayoutAction = async (id, status) => {
         try {
             const token = await AsyncStorage.getItem('token');

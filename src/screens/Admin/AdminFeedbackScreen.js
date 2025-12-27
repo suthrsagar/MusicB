@@ -10,7 +10,7 @@ import { useFocusEffect } from '@react-navigation/native';
 const AdminFeedbackScreen = ({ navigation }) => {
     const [chats, setChats] = useState([]);
     const [feedbacks, setFeedbacks] = useState([]);
-    const [viewMode, setViewMode] = useState('chats'); // 'chats' or 'ratings'
+    const [viewMode, setViewMode] = useState('chats');
     const [loading, setLoading] = useState(true);
 
     useFocusEffect(

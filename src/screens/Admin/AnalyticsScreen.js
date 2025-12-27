@@ -48,7 +48,7 @@ const AnalyticsScreen = () => {
         <ScrollView contentContainerStyle={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
-            {/* Header */}
+
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -57,7 +57,7 @@ const AnalyticsScreen = () => {
                 <View style={{ width: 24 }} />
             </View>
 
-            {/* Overview Cards */}
+
             <View style={styles.grid}>
                 <View style={styles.card}>
                     <Text style={styles.cardLabel}>Total Users</Text>
@@ -81,7 +81,7 @@ const AnalyticsScreen = () => {
                 </View>
             </View>
 
-            {/* Revenue Estimate Box */}
+
             <View style={styles.revenueBox}>
                 <View>
                     <Text style={{ color: '#fff', opacity: 0.8, fontSize: 14 }}>Est. Subscription Revenue</Text>
@@ -93,7 +93,7 @@ const AnalyticsScreen = () => {
                 </View>
             </View>
 
-            {/* Top Songs */}
+
             <Text style={styles.sectionTitle}>Top Performing Songs</Text>
             <View style={styles.listCard}>
                 {topSongs.map((song, index) => (

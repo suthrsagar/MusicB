@@ -22,7 +22,7 @@ import { BASE_URL } from '../../services/apiConfig';
 const SettingsScreen = ({ navigation }) => {
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState('feedback'); // 'feedback' or 'help' or 'rate'
+  const [modalType, setModalType] = useState('feedback');
   const [feedbackText, setFeedbackText] = useState('');
   const [rating, setRating] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -41,11 +41,11 @@ const SettingsScreen = ({ navigation }) => {
       });
       setHasRated(res.data.hasRated);
     } catch (e) {
-      // console.error(e); 
+
     }
   };
 
-  // --- ACTIONS ---
+
   const handleUploadPress = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -67,7 +67,7 @@ const SettingsScreen = ({ navigation }) => {
   };
 
   const openAppInfo = () => {
-    // Just showing alert for now, could be a navigation to a detail screen
+
     Alert.alert("App Info", "Music App\nVersion: 1.0.0\ ");
   };
 
@@ -87,10 +87,7 @@ const SettingsScreen = ({ navigation }) => {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('token');
-      // For feedback, we might want user ID but it's optional in schema. 
-      // If we have token, we can get profile or decode it.
-      // Let's assume we decode or fetch profile first if we want username, 
-      // but for simplicity, we send what we have.
+
 
       let userId = null;
       if (token) {
@@ -121,7 +118,7 @@ const SettingsScreen = ({ navigation }) => {
   };
 
 
-  // --- RENDER MODAL ---
+
   const renderModal = () => (
     <Modal
       animationType="slide"
@@ -173,13 +170,13 @@ const SettingsScreen = ({ navigation }) => {
   );
 
 
-  // --- MAIN RENDER ---
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
       <Text style={styles.header}>Settings</Text>
 
-      {/* --- SUBSCRIPTION --- */}
+
       <View style={styles.card}>
         <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Premium')}>
           <View style={styles.menuIconInfo}>
@@ -195,7 +192,7 @@ const SettingsScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* --- CONTENT MANAGEMENT --- */}
+
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Content</Text>
         <TouchableOpacity style={styles.menuItem} onPress={handleUploadPress}>
@@ -209,7 +206,7 @@ const SettingsScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* --- SUPPORT & FEEDBACK --- */}
+
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Support</Text>
 
@@ -237,11 +234,11 @@ const SettingsScreen = ({ navigation }) => {
       </View>
 
 
-      {/* --- ABOUT --- */}
+
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>About App</Text>
 
-        {/* Helper to render item */}
+
         <TouchableOpacity style={styles.menuItem} onPress={openAppInfo}>
           <View style={styles.menuIconInfo}>
             <View style={[styles.iconBox, { backgroundColor: '#F3E5F5' }]}>
@@ -288,7 +285,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
     backgroundColor: theme.colors.background,
-    paddingBottom: 150, // Added extra padding for MiniPlayer clearance
+    paddingBottom: 150,
   },
   header: {
     ...theme.typography.header,
@@ -341,7 +338,7 @@ const styles = StyleSheet.create({
     marginVertical: 10
   },
 
-  // Modal Styles
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

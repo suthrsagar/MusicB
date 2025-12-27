@@ -106,7 +106,7 @@ const PlaylistScreen = ({ navigation }) => {
                 />
             )}
 
-            {/* Create Modal */}
+
             <Modal
                 transparent={true}
                 visible={modalVisible}

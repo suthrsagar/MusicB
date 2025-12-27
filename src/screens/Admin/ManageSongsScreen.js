@@ -23,7 +23,7 @@ const ManageSongsScreen = () => {
         setLoading(true);
         try {
             const token = await AsyncStorage.getItem('token');
-            let url = `${BASE_URL}/api/song`; // Public approved songs
+            let url = `${BASE_URL}/api/song`;
 
             if (activeTab === 'pending') {
                 url = `${BASE_URL}/api/admin/songs/pending`;
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     activeTab: {
-        backgroundColor: theme.colors.background, // Or a light primary tint
+        backgroundColor: theme.colors.background,
     },
     tabText: {
         color: theme.colors.textSecondary,

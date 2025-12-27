@@ -18,7 +18,7 @@ import { theme } from '../../theme';
 import { BASE_URL } from '../../services/apiConfig';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const AdminChatScreen = ({ route, navigation }) => { // userId passed in route
+const AdminChatScreen = ({ route, navigation }) => {
     const { userId, username } = route.params;
     const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState('');

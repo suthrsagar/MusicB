@@ -111,7 +111,7 @@ const SendNotificationScreen = () => {
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
-            {/* Header */}
+
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -128,7 +128,7 @@ const SendNotificationScreen = () => {
                 }
                 showsVerticalScrollIndicator={false}
             >
-                {/* Compose Card */}
+
                 <View style={styles.card}>
                     <View style={styles.cardHeader}>
                         <View style={styles.iconCircle}>
@@ -175,7 +175,7 @@ const SendNotificationScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* History Section */}
+
                 <Text style={styles.sectionTitle}>Recent History</Text>
 
                 {notifications.length === 0 ? (

@@ -18,7 +18,7 @@ const NotificationScreen = () => {
             const res = await axios.get(`${BASE_URL}/api/notifications`);
             setNotifications(res.data);
 
-            // Mark all as read locally by saving the latest timestamp
+
             if (res.data.length > 0) {
                 const latestTime = res.data[0].createdAt;
                 await AsyncStorage.setItem('lastReadNotificationTime', latestTime);
@@ -54,7 +54,7 @@ const NotificationScreen = () => {
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
-            {/* Simple Header */}
+
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 5 }}>
                     <Ionicons name="arrow-back" size={24} color={theme.colors.text} />

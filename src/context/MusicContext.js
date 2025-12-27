@@ -17,14 +17,14 @@ export const MusicProvider = ({ children }) => {
     const queueRef = useRef([]);
     const currentIndexRef = useRef(-1);
 
-    // Keep refs detailed synced with state
+
     useEffect(() => {
         queueRef.current = queue;
         currentIndexRef.current = currentIndex;
     }, [queue, currentIndex]);
 
     useEffect(() => {
-        // Subscribe to events
+
         const onFinishedLoadingURL = SoundPlayer.addEventListener('FinishedLoadingURL', ({ success, url }) => {
             setLoading(false);
             if (success) {
@@ -34,14 +34,13 @@ export const MusicProvider = ({ children }) => {
 
         const onFinishedPlaying = SoundPlayer.addEventListener('FinishedPlaying', ({ success }) => {
             setIsPlaying(false);
-            // Auto-Next Logic with delay for stability
-            // Use internal function to access latest state via refs
+
             setTimeout(() => {
                 playNextInternal();
             }, 500);
         });
 
-        // Loop for progress
+
         const interval = setInterval(async () => {
             if (isPlaying) {
                 try {
@@ -58,14 +57,14 @@ export const MusicProvider = ({ children }) => {
             onFinishedPlaying.remove();
             clearInterval(interval);
         };
-    }, [isPlaying]); // Minimized dependencies for listeners
+    }, [isPlaying]);
 
     const playSong = async (song, playlistList = []) => {
         try {
             setLoading(true);
             setCurrentSong(song);
 
-            // If a playlist is passed, set queue.
+
             if (playlistList.length > 0) {
                 setQueue(playlistList);
                 const newIndex = playlistList.findIndex(s => s.fileId === song.fileId);
@@ -77,10 +76,10 @@ export const MusicProvider = ({ children }) => {
 
             const streamUrl = `${BASE_URL}/api/song/stream/${song.fileId}`;
 
-            // Ensure stop before play (helps with robustness)
+
             try { SoundPlayer.stop(); } catch (e) { }
 
-            // Specific delay for Android sometimes needed
+
             setTimeout(() => {
                 SoundPlayer.playUrl(streamUrl);
             }, 100);
@@ -101,14 +100,14 @@ export const MusicProvider = ({ children }) => {
 
         let nextIndex = currentIdx + 1;
 
-        // Loop: If end of queue, go to 0
+
         if (nextIndex >= currentQueue.length) {
             nextIndex = 0;
         }
 
         const nextSong = currentQueue[nextIndex];
 
-        // Update State
+
         setCurrentIndex(nextIndex);
         setCurrentSong(nextSong);
         setLoading(true);
@@ -128,12 +127,12 @@ export const MusicProvider = ({ children }) => {
     const playNext = () => playNextInternal();
 
     const playPrev = async () => {
-        const currentQueue = queueRef.current; // Use Ref for reliability
+        const currentQueue = queueRef.current;
         const currentIdx = currentIndexRef.current;
 
         if (currentQueue.length === 0) return;
 
-        // Smart Previous: Restart if played > 3s
+
         try {
             const info = await SoundPlayer.getInfo();
             if (info && info.currentTime > 3) {
@@ -144,7 +143,7 @@ export const MusicProvider = ({ children }) => {
 
         let prevIndex = currentIdx - 1;
         if (prevIndex < 0) {
-            prevIndex = currentQueue.length - 1; // Loop to end
+            prevIndex = currentQueue.length - 1;
         }
 
         const prevSong = currentQueue[prevIndex];

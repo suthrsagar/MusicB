@@ -28,7 +28,7 @@ const API_URL = `${BASE_URL}/api/`;
 
 const ProfileScreen = ({ navigation }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isRegister, setIsRegister] = useState(true); // Default to Create Account
+  const [isRegister, setIsRegister] = useState(true);
   const [loading, setLoading] = useState(true);
   const [btnLoading, setBtnLoading] = useState(false);
 
@@ -38,7 +38,7 @@ const ProfileScreen = ({ navigation }) => {
   const [imageUri, setImageUri] = useState(null);
   const [error, setError] = useState('');
 
-  // Password Change State
+
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -120,7 +120,7 @@ const ProfileScreen = ({ navigation }) => {
       navigation.replace('Tabs');
     } catch (err) {
       setError(err.response?.data?.msg || 'Registration failed');
-      // Alert.alert('Error', err.response?.data?.msg || 'Registration failed');
+
     } finally {
       setBtnLoading(false);
     }
@@ -140,7 +140,7 @@ const ProfileScreen = ({ navigation }) => {
       navigation.replace('Tabs');
     } catch (err) {
       setError(err.response?.data?.msg || 'Login failed');
-      // Alert.alert('Failed', err.response?.data?.msg || 'Login failed');
+
     } finally {
       setBtnLoading(false);
     }
@@ -151,7 +151,7 @@ const ProfileScreen = ({ navigation }) => {
       const res = await api.get('profile');
       setProfile(res.data);
 
-      // Manage Admin Topic Subscription
+
       try {
         if (res.data.role === 'admin') {
           await messaging().subscribeToTopic('admin_notifications');
@@ -178,7 +178,7 @@ const ProfileScreen = ({ navigation }) => {
     setProfile(null);
     setUsername(''); setEmail(''); setPassword(''); setImageUri(null);
     try {
-      closePlayer(); // Stop playback using Context
+      closePlayer();
       await messaging().unsubscribeFromTopic('admin_notifications');
     } catch (e) { }
     navigation.reset({ index: 0, routes: [{ name: 'LoginProfile' }] });
@@ -408,7 +408,7 @@ const ProfileScreen = ({ navigation }) => {
             </View>
           </View>
 
-          {/* Feature Highlight */}
+
           <View style={styles.featureRow}>
             <View style={styles.featItem}>
               <Ionicons name="flash" size={16} color={theme.colors.primary} />
@@ -482,7 +482,7 @@ const ProfileScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Settings Options */}
+
       <View style={{ width: '85%', marginBottom: 20 }}>
         <TouchableOpacity
           style={styles.menuItem}
@@ -496,7 +496,7 @@ const ProfileScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Admin Button */}
+
       {profile?.role === 'admin' && (
         <TouchableOpacity style={styles.adminBtn} onPress={() => navigation.navigate('AdminDashboard')}>
           <Ionicons name="shield-checkmark" size={20} color="#FF8F00" style={{ marginRight: 10 }} />
@@ -506,10 +506,10 @@ const ProfileScreen = ({ navigation }) => {
 
 
 
-      {/* Spacer to push logout to bottom if needed */}
+
       <View style={{ flex: 1 }} />
 
-      {/* Logout Button */}
+
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={22} color={theme.colors.error} style={{ marginRight: 10 }} />
         <Text style={styles.logoutText}>Logout</Text>
@@ -517,7 +517,7 @@ const ProfileScreen = ({ navigation }) => {
 
       <Text style={styles.versionText}>App Version 1.0.0</Text>
 
-      {/* Password Change Modal */}
+
       <Modal
         visible={showPasswordModal}
         transparent={true}
@@ -579,10 +579,10 @@ const styles = StyleSheet.create({
   container: { flexGrow: 1, justifyContent: 'center', padding: 24, backgroundColor: theme.colors.background },
   center: { flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' },
 
-  // --- PREMIUM AUTH STYLES (LIGHT) ---
+
   authWrapper: {
     flex: 1,
-    backgroundColor: '#F7F9FC', // Light blueish gray
+    backgroundColor: '#F7F9FC',
   },
   topGradient: {
     position: 'absolute',
@@ -783,7 +783,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Auth Styles (Old - Deprecated but kept for safety if needed internally)
+
   title: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginBottom: 30, color: theme.colors.text },
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface, borderRadius: 12, paddingHorizontal: 15, marginBottom: 15, height: 55, ...theme.shadows.soft },
   input: { flex: 1, marginLeft: 10, color: theme.colors.text, fontSize: 16 },
@@ -793,7 +793,7 @@ const styles = StyleSheet.create({
   imageBox: { height: 150, width: 150, borderRadius: 75, backgroundColor: theme.colors.surface, alignSelf: 'center', justifyContent: 'center', alignItems: 'center', marginBottom: 20, borderWidth: 2, borderColor: theme.colors.border, borderStyle: 'dashed' },
   avatar: { width: 140, height: 140, borderRadius: 70 },
 
-  // Profile Specific Styles
+
   profileContainer: { flexGrow: 1, backgroundColor: theme.colors.background, alignItems: 'center', paddingVertical: 40 },
   bgDecorCircle: { position: 'absolute', top: -150, width: 400, height: 400, borderRadius: 200, backgroundColor: 'rgba(67, 24, 255, 0.05)', alignSelf: 'center' },
   profileCard: { width: '85%', backgroundColor: theme.colors.surface, borderRadius: 24, padding: 25, alignItems: 'center', marginBottom: 20, ...theme.shadows.medium },

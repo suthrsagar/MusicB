@@ -32,8 +32,7 @@ const PlaylistDetailScreen = ({ route, navigation }) => {
     };
 
     const handlePlaySong = (song, index) => {
-        // Play the selected song, but pass the ENTIRE playlist as the queue
-        // This ensures "next" plays the next song in this playlist
+
         playSong(song, playlist.songs);
     };
 
@@ -78,7 +77,7 @@ const PlaylistDetailScreen = ({ route, navigation }) => {
         <View style={styles.container}>
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-            {/* Header / Cover */}
+
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
                     <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -91,7 +90,7 @@ const PlaylistDetailScreen = ({ route, navigation }) => {
                     <Text style={styles.subtitle}>{playlist.songs.length} Songs</Text>
                 </View>
 
-                {/* Play All Button */}
+
                 {playlist.songs.length > 0 && (
                     <TouchableOpacity
                         style={styles.playAllBtn}
@@ -142,11 +141,11 @@ const styles = StyleSheet.create({
     },
     backBtn: {
         position: 'absolute',
-        top: Platform.OS === 'ios' ? 50 : 20, // Adjusted for Status Bar
+        top: Platform.OS === 'ios' ? 50 : 20,
         left: 20,
         zIndex: 10,
-        padding: 10, // Larger hit area
-        backgroundColor: 'rgba(0,0,0,0.3)', // Background for visibility
+        padding: 10,
+        backgroundColor: 'rgba(0,0,0,0.3)',
         borderRadius: 20
     },
     headerInfo: {

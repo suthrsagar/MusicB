@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
         fontSize: 10,
         color: theme.colors.textSecondary,
         marginVertical: 2,
-        fontFamily: 'monospace' // Easier to read IDs
+        fontFamily: 'monospace'
     },
     statusRow: {
         flexDirection: 'row',

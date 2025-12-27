@@ -7,20 +7,19 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } fr
 
 const VolumeController = () => {
     const [volume, setVolume] = useState(0.5);
-    // Remove local muted state if not strictly needed or derive it
-    const opacity = useSharedValue(0); // Start hidden
-    const display = useSharedValue('none'); // Start with display none to let touches pass through
-    const timerRef = React.useRef(null);
-    const scale = useSharedValue(1); // This scale is for the button press animation
 
-    // Function to show the controller
+    const opacity = useSharedValue(0);
+    const display = useSharedValue('none');
+    const timerRef = React.useRef(null);
+    const scale = useSharedValue(1);
+
+
     const showController = () => {
         'worklet';
         display.value = 'flex';
         opacity.value = withSpring(1);
 
-        // Clear existing timer if triggered from JS side (needs wrapper if calling from worklet, 
-        // but here we primarily call from effect/handlers which are JS thread)
+
     };
 
     const scheduleHide = useCallback(() => {
@@ -29,12 +28,12 @@ const VolumeController = () => {
             opacity.value = withTiming(0, { duration: 500 }, () => {
                 display.value = 'none';
             });
-        }, 3000); // Hide after 3 seconds
+        }, 3000);
     }, []);
 
     const onVolumeChange = useCallback((newVolume) => {
         setVolume(newVolume);
-        // Show controller logic
+
         display.value = 'flex';
         opacity.value = withSpring(1);
         scheduleHide();
@@ -69,7 +68,7 @@ const VolumeController = () => {
 
     const handleManualChange = async (value) => {
         setVolume(value);
-        scheduleHide(); // Reset timer on manual interaction
+        scheduleHide();
         try {
             await VolumeManager.setVolume(value);
         } catch (e) {
@@ -95,7 +94,7 @@ const VolumeController = () => {
         });
     };
 
-    // Animated style for the main container (opacity and display)
+
     const containerAnimatedStyle = useAnimatedStyle(() => {
         return {
             opacity: opacity.value,
@@ -103,7 +102,7 @@ const VolumeController = () => {
         };
     });
 
-    // Animated style for the buttons (scale effect)
+
     const buttonAnimatedStyle = useAnimatedStyle(() => {
         return {
             transform: [{ scale: scale.value }],
@@ -158,8 +157,8 @@ const VolumeController = () => {
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
-        left: 10, // Position on the left side
-        top: '30%', // Vertically centered-ish
+        left: 10,
+        top: '30%',
         zIndex: 9999,
         backgroundColor: '#FFFFFF',
         borderRadius: 30,
@@ -173,10 +172,10 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 20,
         elevation: 10,
-        flexDirection: 'column', // Vertical layout
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'space-between',
-        minHeight: 250, // Ensure height for slider
+        minHeight: 250,
     },
     header: {
         marginBottom: 10,
@@ -184,26 +183,26 @@ const styles = StyleSheet.create({
     },
     percentage: {
         color: '#1B254B',
-        fontSize: 12, // Smaller font for vertical space
+        fontSize: 12,
         fontWeight: '700',
     },
     verticalControls: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        width: 40, // Constraint width
+        width: 40,
     },
     verticalSliderContainer: {
-        height: 150, // Fixed height for the slider area
+        height: 150,
         justifyContent: 'center',
         alignItems: 'center',
         marginVertical: 10,
         width: 40,
     },
     verticalSlider: {
-        width: 150, // Width becomes height when rotated
+        width: 150,
         height: 40,
-        transform: [{ rotate: '-90deg' }], // Rotate vertical
+        transform: [{ rotate: '-90deg' }],
     },
     button: {
         padding: 5,
