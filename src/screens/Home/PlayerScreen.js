@@ -56,372 +56,371 @@ const PlayerScreen = ({ route, navigation }) => {
         Alert.alert('Sleep Timer', 'Music stopped.');
       }, ms);
     }
-  }
     return () => clearTimeout(timer);
-}, [sleepTimer, isPlaying]);
+  }, [sleepTimer, isPlaying]);
 
 
-useEffect(() => {
-  if (song) {
-    if (!currentSong || currentSong.fileId !== song.fileId) {
-      playSong(song, playlist || []);
+  useEffect(() => {
+    if (song) {
+      if (!currentSong || currentSong.fileId !== song.fileId) {
+        playSong(song, playlist || []);
+      }
     }
+  }, [song]);
+
+  if (!currentSong && !song) {
+    return null;
   }
-}, [song]);
 
-if (!currentSong && !song) {
-  return null;
-}
+  const activeSong = currentSong || song;
 
-const activeSong = currentSong || song;
+  useEffect(() => {
+    const fetchSongDetails = async () => {
+      if (!activeSong) return;
+      try {
+        const token = await AsyncStorage.getItem('token');
 
-useEffect(() => {
-  const fetchSongDetails = async () => {
-    if (!activeSong) return;
+        if (token) {
+          axios.post(`${BASE_URL}/api/song/view/${activeSong._id}`, {}, {
+            headers: { 'x-auth-token': token }
+          }).catch(e => console.log("View record error", e));
+        }
+
+        const songRes = await axios.get(`${BASE_URL}/api/song/${activeSong._id}`);
+        setViewsCount(songRes.data.views ? songRes.data.views.length : 0);
+        setLikesCount(songRes.data.likes ? songRes.data.likes.length : 0);
+
+        if (token) {
+          const profileRes = await axios.get(`${BASE_URL}/api/profile`, {
+            headers: { 'x-auth-token': token }
+          });
+          const myId = profileRes.data._id;
+
+          if (songRes.data.likes && songRes.data.likes.includes(myId)) {
+            setLiked(true);
+          } else {
+            setLiked(false);
+          }
+        }
+      } catch (e) { }
+    }
+    fetchSongDetails();
+  }, [activeSong]);
+
+
+  const handleLike = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-
-      if (token) {
-        axios.post(`${BASE_URL}/api/song/view/${activeSong._id}`, {}, {
-          headers: { 'x-auth-token': token }
-        }).catch(e => console.log("View record error", e));
-      }
-
-      const songRes = await axios.get(`${BASE_URL}/api/song/${activeSong._id}`);
-      setViewsCount(songRes.data.views ? songRes.data.views.length : 0);
-      setLikesCount(songRes.data.likes ? songRes.data.likes.length : 0);
-
-      if (token) {
-        const profileRes = await axios.get(`${BASE_URL}/api/profile`, {
-          headers: { 'x-auth-token': token }
-        });
-        const myId = profileRes.data._id;
-
-        if (songRes.data.likes && songRes.data.likes.includes(myId)) {
-          setLiked(true);
-        } else {
-          setLiked(false);
-        }
-      }
-    } catch (e) { }
-  }
-  fetchSongDetails();
-}, [activeSong]);
-
-
-const handleLike = async () => {
-  try {
-    const token = await AsyncStorage.getItem('token');
-    if (!token) {
-      Alert.alert('Login Required', 'Please login to like this song.');
-      return;
-    }
-
-    const res = await axios.put(`${BASE_URL}/api/song/like/${activeSong._id}`, {}, {
-      headers: { 'x-auth-token': token }
-    });
-
-    setLiked(!liked);
-    setLikesCount(res.data.likes.length);
-
-  } catch (e) {
-    console.error(e);
-    const msg = e.response?.data?.msg || 'Could not like song';
-    Alert.alert('Like Error', msg);
-  }
-};
-
-
-if (!activeSong) return null;
-
-const formatTime = (seconds) => {
-  if (!seconds || isNaN(seconds)) return "00:00";
-  const min = Math.floor(seconds / 60);
-  const sec = Math.floor(seconds % 60);
-  return `${min}:${sec < 10 ? '0' + sec : sec}`;
-};
-
-const downloadSong = async () => {
-  if (!activeSong) return;
-
-  try {
-    if (Platform.OS === 'android' && Platform.Version < 33) {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        {
-          title: 'Storage Permission',
-          message: 'App needs access to store downloaded songs.',
-        }
-      );
-      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-        Alert.alert('Permission Denied', 'Storage permission is required to download.');
+      if (!token) {
+        Alert.alert('Login Required', 'Please login to like this song.');
         return;
       }
+
+      const res = await axios.put(`${BASE_URL}/api/song/like/${activeSong._id}`, {}, {
+        headers: { 'x-auth-token': token }
+      });
+
+      setLiked(!liked);
+      setLikesCount(res.data.likes.length);
+
+    } catch (e) {
+      console.error(e);
+      const msg = e.response?.data?.msg || 'Could not like song';
+      Alert.alert('Like Error', msg);
     }
+  };
 
-    const fileName = `${activeSong.title.replace(/[^a-zA-Z0-9]/g, '_')}.mp3`;
-    const path = `${RNFS.DownloadDirectoryPath}/${fileName}`;
-    const streamUrl = `${BASE_URL}/api/song/stream/${activeSong.fileId}`;
-    const token = await AsyncStorage.getItem('token');
 
-    Alert.alert('Downloading', `Started downloading ${activeSong.title}...`);
+  if (!activeSong) return null;
 
-    const options = {
-      fromUrl: streamUrl,
-      toFile: path,
-      headers: token ? { 'x-auth-token': token } : {},
-      background: true,
-      discretionary: true,
-      begin: (res) => {
-      },
-      progress: (res) => {
+  const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return "00:00";
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60);
+    return `${min}:${sec < 10 ? '0' + sec : sec}`;
+  };
+
+  const downloadSong = async () => {
+    if (!activeSong) return;
+
+    try {
+      if (Platform.OS === 'android' && Platform.Version < 33) {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: 'Storage Permission',
+            message: 'App needs access to store downloaded songs.',
+          }
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Permission Denied', 'Storage permission is required to download.');
+          return;
+        }
       }
-    };
 
-    const ret = RNFS.downloadFile(options);
+      const fileName = `${activeSong.title.replace(/[^a-zA-Z0-9]/g, '_')}.mp3`;
+      const path = `${RNFS.DownloadDirectoryPath}/${fileName}`;
+      const streamUrl = `${BASE_URL}/api/song/stream/${activeSong.fileId}`;
+      const token = await AsyncStorage.getItem('token');
 
-    ret.promise.then((res) => {
-      Alert.alert('Download Complete', `Saved to ${path}`);
-    }).catch((err) => {
-      console.error(err);
-      Alert.alert('Download Failed', 'Could not save the file.');
-    });
+      Alert.alert('Downloading', `Started downloading ${activeSong.title}...`);
 
-  } catch (e) {
-    console.error(e);
-    Alert.alert('Error', 'An error occurred while downloading.');
-  }
-};
+      const options = {
+        fromUrl: streamUrl,
+        toFile: path,
+        headers: token ? { 'x-auth-token': token } : {},
+        background: true,
+        discretionary: true,
+        begin: (res) => {
+        },
+        progress: (res) => {
+        }
+      };
 
-const renderSleepTimerModal = () => (
-  <Modal
-    transparent={true}
-    visible={showSleepModal}
-    animationType="fade"
-    onRequestClose={() => setShowSleepModal(false)}
-  >
-    <TouchableOpacity
-      style={styles.modalOverlay}
-      activeOpacity={1}
-      onPress={() => setShowSleepModal(false)}
-    >
-      <View style={styles.modalContent}>
-        <Text style={styles.modalTitle}>Sleep Timer</Text>
+      const ret = RNFS.downloadFile(options);
 
-        {[
-          { label: 'Off', value: null },
-          { label: '10 Minutes', value: 10 },
-          { label: '30 Minutes', value: 30 },
-          { label: '60 Minutes', value: 60 },
-        ].map((option) => (
-          <TouchableOpacity
-            key={option.label}
-            style={[
-              styles.modalOption,
-              sleepTimer === option.value && styles.modalOptionSelected
-            ]}
-            onPress={() => {
-              setSleepTimer(option.value);
-              setShowSleepModal(false);
-              if (option.value) Alert.alert('Sleep Timer Set', `Playback will stop in ${option.label}`);
-            }}
-          >
-            <Text style={[
-              styles.modalOptionText,
-              sleepTimer === option.value && styles.modalOptionTextSelected
-            ]}>{option.label}</Text>
-            {sleepTimer === option.value && (
-              <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
-    </TouchableOpacity>
-  </Modal>
-);
+      ret.promise.then((res) => {
+        Alert.alert('Download Complete', `Saved to ${path}`);
+      }).catch((err) => {
+        console.error(err);
+        Alert.alert('Download Failed', 'Could not save the file.');
+      });
 
-
-const [showPlaylistModal, setShowPlaylistModal] = useState(false);
-const [myPlaylists, setMyPlaylists] = useState([]);
-
-const fetchPlaylists = async () => {
-  try {
-    const token = await AsyncStorage.getItem('token');
-    if (!token) {
-      Alert.alert('Login Required', 'Please login to add to playlist.');
-      return;
+    } catch (e) {
+      console.error(e);
+      Alert.alert('Error', 'An error occurred while downloading.');
     }
-    const res = await axios.get(`${BASE_URL}/api/playlist/me`, {
-      headers: { 'x-auth-token': token }
-    });
-    setMyPlaylists(res.data);
-    setShowPlaylistModal(true);
-  } catch (e) {
-    Alert.alert('Error', 'Could not fetch playlists');
-  }
-};
+  };
 
-const addToPlaylist = async (playlistId) => {
-  try {
-    const token = await AsyncStorage.getItem('token');
-    await axios.put(`${BASE_URL}/api/playlist/add/${playlistId}`,
-      { songId: activeSong._id },
-      { headers: { 'x-auth-token': token } }
-    );
-    Alert.alert('Success', 'Song added to playlist');
-    setShowPlaylistModal(false);
-  } catch (e) {
-    Alert.alert('Error', 'Could not add to playlist');
-  }
-};
-
-const renderPlaylistModal = () => (
-  <Modal
-    transparent={true}
-    visible={showPlaylistModal}
-    animationType="slide"
-    onRequestClose={() => setShowPlaylistModal(false)}
-  >
-    <TouchableOpacity
-      style={styles.modalOverlay}
-      activeOpacity={1}
-      onPress={() => setShowPlaylistModal(false)}
+  const renderSleepTimerModal = () => (
+    <Modal
+      transparent={true}
+      visible={showSleepModal}
+      animationType="fade"
+      onRequestClose={() => setShowSleepModal(false)}
     >
-      <View style={[styles.modalContent, { maxHeight: '60%' }]}>
-        <Text style={styles.modalTitle}>Add to Playlist</Text>
-        {myPlaylists.length === 0 ? (
-          <Text style={{ textAlign: 'center', marginVertical: 20, color: theme.colors.textSecondary }}>No playlists found. Create one in the Playlist tab.</Text>
-        ) : (
-          <FlatList
-            data={myPlaylists}
-            keyExtractor={item => item._id}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.modalOption} onPress={() => addToPlaylist(item._id)}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 15 }}>
-                    <Ionicons name="musical-note" size={20} color="#fff" />
-                  </View>
-                  <View>
-                    <Text style={styles.modalOptionText}>{item.name}</Text>
-                    <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>{item.songs?.length || 0} Songs</Text>
-                  </View>
-                </View>
-                <Ionicons name="add-circle-outline" size={24} color={theme.colors.primary} />
-              </TouchableOpacity>
-            )}
-          />
-        )}
-      </View>
-    </TouchableOpacity>
-  </Modal>
-);
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowSleepModal(false)}
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Sleep Timer</Text>
 
-return (
-  <View style={styles.container}>
-    <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
-
-
-    <View style={styles.header}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-        <Ionicons name="chevron-down" size={30} color={theme.colors.text} />
+          {[
+            { label: 'Off', value: null },
+            { label: '10 Minutes', value: 10 },
+            { label: '30 Minutes', value: 30 },
+            { label: '60 Minutes', value: 60 },
+          ].map((option) => (
+            <TouchableOpacity
+              key={option.label}
+              style={[
+                styles.modalOption,
+                sleepTimer === option.value && styles.modalOptionSelected
+              ]}
+              onPress={() => {
+                setSleepTimer(option.value);
+                setShowSleepModal(false);
+                if (option.value) Alert.alert('Sleep Timer Set', `Playback will stop in ${option.label}`);
+              }}
+            >
+              <Text style={[
+                styles.modalOptionText,
+                sleepTimer === option.value && styles.modalOptionTextSelected
+              ]}>{option.label}</Text>
+              {sleepTimer === option.value && (
+                <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
       </TouchableOpacity>
-      <Text style={styles.headerTitle}>Now Playing</Text>
-      <View style={{ flexDirection: 'row' }}>
-        <TouchableOpacity style={styles.iconButton} onPress={downloadSong}>
-          <Ionicons name="cloud-download-outline" size={28} color={theme.colors.text} />
+    </Modal>
+  );
+
+
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [myPlaylists, setMyPlaylists] = useState([]);
+
+  const fetchPlaylists = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        Alert.alert('Login Required', 'Please login to add to playlist.');
+        return;
+      }
+      const res = await axios.get(`${BASE_URL}/api/playlist/me`, {
+        headers: { 'x-auth-token': token }
+      });
+      setMyPlaylists(res.data);
+      setShowPlaylistModal(true);
+    } catch (e) {
+      Alert.alert('Error', 'Could not fetch playlists');
+    }
+  };
+
+  const addToPlaylist = async (playlistId) => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      await axios.put(`${BASE_URL}/api/playlist/add/${playlistId}`,
+        { songId: activeSong._id },
+        { headers: { 'x-auth-token': token } }
+      );
+      Alert.alert('Success', 'Song added to playlist');
+      setShowPlaylistModal(false);
+    } catch (e) {
+      Alert.alert('Error', 'Could not add to playlist');
+    }
+  };
+
+  const renderPlaylistModal = () => (
+    <Modal
+      transparent={true}
+      visible={showPlaylistModal}
+      animationType="slide"
+      onRequestClose={() => setShowPlaylistModal(false)}
+    >
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowPlaylistModal(false)}
+      >
+        <View style={[styles.modalContent, { maxHeight: '60%' }]}>
+          <Text style={styles.modalTitle}>Add to Playlist</Text>
+          {myPlaylists.length === 0 ? (
+            <Text style={{ textAlign: 'center', marginVertical: 20, color: theme.colors.textSecondary }}>No playlists found. Create one in the Playlist tab.</Text>
+          ) : (
+            <FlatList
+              data={myPlaylists}
+              keyExtractor={item => item._id}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.modalOption} onPress={() => addToPlaylist(item._id)}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 15 }}>
+                      <Ionicons name="musical-note" size={20} color="#fff" />
+                    </View>
+                    <View>
+                      <Text style={styles.modalOptionText}>{item.name}</Text>
+                      <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>{item.songs?.length || 0} Songs</Text>
+                    </View>
+                  </View>
+                  <Ionicons name="add-circle-outline" size={24} color={theme.colors.primary} />
+                </TouchableOpacity>
+              )}
+            />
+          )}
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+
+
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+          <Ionicons name="chevron-down" size={30} color={theme.colors.text} />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Now Playing</Text>
+        <View style={{ flexDirection: 'row' }}>
+          <TouchableOpacity style={styles.iconButton} onPress={downloadSong}>
+            <Ionicons name="cloud-download-outline" size={28} color={theme.colors.text} />
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
 
 
-    <View style={styles.artworkContainer}>
-      <View style={styles.artwork}>
-        {activeSong.coverImage ? (
-          <Image source={{ uri: activeSong.coverImage }} style={styles.coverImage} resizeMode="cover" />
-        ) : (
-          <Ionicons name="musical-notes" size={100} color="#fff" />
-        )}
+      <View style={styles.artworkContainer}>
+        <View style={styles.artwork}>
+          {activeSong.coverImage ? (
+            <Image source={{ uri: activeSong.coverImage }} style={styles.coverImage} resizeMode="cover" />
+          ) : (
+            <Ionicons name="musical-notes" size={100} color="#fff" />
+          )}
+        </View>
       </View>
-    </View>
 
 
-    <View style={styles.infoContainer}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '80%' }}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title} numberOfLines={1}>{activeSong.title}</Text>
-          <Text style={styles.artist} numberOfLines={1}>{activeSong.artist}</Text>
+      <View style={styles.infoContainer}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '80%' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.title} numberOfLines={1}>{activeSong.title}</Text>
+            <Text style={styles.artist} numberOfLines={1}>{activeSong.artist}</Text>
+          </View>
+
+          <TouchableOpacity onPress={handleLike} style={{ padding: 10, alignItems: 'center' }}>
+            <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? theme.colors.error : theme.colors.textSecondary} />
+            <Text style={{ fontSize: 12, color: theme.colors.textSecondary, fontWeight: '600', marginTop: 2 }}>
+              {likesCount}
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={handleLike} style={{ padding: 10, alignItems: 'center' }}>
-          <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? theme.colors.error : theme.colors.textSecondary} />
-          <Text style={{ fontSize: 12, color: theme.colors.textSecondary, fontWeight: '600', marginTop: 2 }}>
-            {likesCount}
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
+          <Ionicons name="play" size={12} color={theme.colors.textSecondary} />
+          <Text style={{ color: theme.colors.textSecondary, fontSize: 12, marginLeft: 4 }}>
+            {viewsCount + (isPlaying ? 1 : 0)} Plays
           </Text>
+        </View>
+      </View>
+
+
+      <View style={styles.sliderContainer}>
+        <Slider
+          style={styles.slider}
+          minimumValue={0}
+          maximumValue={progress.duration || 1}
+          value={progress.position}
+          minimumTrackTintColor={theme.colors.primary}
+          maximumTrackTintColor={theme.colors.border}
+          thumbTintColor={theme.colors.primary}
+          onSlidingComplete={seekTo}
+        />
+        <View style={styles.timeContainer}>
+          <Text style={styles.timeText}>{formatTime(progress.position)}</Text>
+          <Text style={styles.timeText}>{formatTime(progress.duration)}</Text>
+        </View>
+      </View>
+
+
+      <View style={styles.controlsContainer}>
+        <TouchableOpacity style={styles.secondaryControl} onPress={playPrev}>
+          <Ionicons name="play-skip-back" size={30} color={theme.colors.text} />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.playButton} onPress={togglePlayPause} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#fff" size="large" />
+          ) : (
+            <Ionicons name={isPlaying ? "pause" : "play"} size={45} color="#fff" />
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.secondaryControl} onPress={playNext}>
+          <Ionicons name="play-skip-forward" size={30} color={theme.colors.text} />
         </TouchableOpacity>
       </View>
 
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
-        <Ionicons name="play" size={12} color={theme.colors.textSecondary} />
-        <Text style={{ color: theme.colors.textSecondary, fontSize: 12, marginLeft: 4 }}>
-          {viewsCount + (isPlaying ? 1 : 0)} Plays
-        </Text>
+      <View style={styles.footerOptions}>
+        <TouchableOpacity style={styles.footerBtn} onPress={fetchPlaylists}>
+          <Ionicons name="add-circle-outline" size={26} color={theme.colors.text} />
+          <Text style={styles.footerBtnText}>Playlist</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.footerBtn} onPress={() => setShowSleepModal(true)}>
+          <Ionicons name="timer-outline" size={26} color={theme.colors.text} />
+          <Text style={styles.footerBtnText}>Timer</Text>
+        </TouchableOpacity>
       </View>
+      {renderSleepTimerModal()}
+      {renderPlaylistModal()}
     </View>
-
-
-    <View style={styles.sliderContainer}>
-      <Slider
-        style={styles.slider}
-        minimumValue={0}
-        maximumValue={progress.duration || 1}
-        value={progress.position}
-        minimumTrackTintColor={theme.colors.primary}
-        maximumTrackTintColor={theme.colors.border}
-        thumbTintColor={theme.colors.primary}
-        onSlidingComplete={seekTo}
-      />
-      <View style={styles.timeContainer}>
-        <Text style={styles.timeText}>{formatTime(progress.position)}</Text>
-        <Text style={styles.timeText}>{formatTime(progress.duration)}</Text>
-      </View>
-    </View>
-
-
-    <View style={styles.controlsContainer}>
-      <TouchableOpacity style={styles.secondaryControl} onPress={playPrev}>
-        <Ionicons name="play-skip-back" size={30} color={theme.colors.text} />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.playButton} onPress={togglePlayPause} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#fff" size="large" />
-        ) : (
-          <Ionicons name={isPlaying ? "pause" : "play"} size={45} color="#fff" />
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.secondaryControl} onPress={playNext}>
-        <Ionicons name="play-skip-forward" size={30} color={theme.colors.text} />
-      </TouchableOpacity>
-    </View>
-
-
-    <View style={styles.footerOptions}>
-      <TouchableOpacity style={styles.footerBtn} onPress={fetchPlaylists}>
-        <Ionicons name="add-circle-outline" size={26} color={theme.colors.text} />
-        <Text style={styles.footerBtnText}>Playlist</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.footerBtn} onPress={() => setShowSleepModal(true)}>
-        <Ionicons name="timer-outline" size={26} color={theme.colors.text} />
-        <Text style={styles.footerBtnText}>Timer</Text>
-      </TouchableOpacity>
-    </View>
-    {renderSleepTimerModal()}
-    {renderPlaylistModal()}
-  </View>
-);
+  );
 };
 
 export default PlayerScreen;
