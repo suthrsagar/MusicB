@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, StatusBar } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, StatusBar, Image } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -39,7 +39,8 @@ export default function SearchScreen() {
       const filtered = allSongs.filter((song) => {
         const titleMatch = song.title?.toLowerCase().includes(lowerQuery);
         const artistMatch = song.artist?.toLowerCase().includes(lowerQuery);
-        return titleMatch || artistMatch;
+        const albumMatch = song.album?.toLowerCase().includes(lowerQuery);
+        return titleMatch || artistMatch || albumMatch;
       });
       setFilteredSongs(filtered);
     }
@@ -52,7 +53,11 @@ export default function SearchScreen() {
       onPress={() => navigation.navigate('PlayerScreen', { song: item })}
     >
       <View style={styles.iconContainer}>
-        <Ionicons name="musical-notes-outline" size={24} color={theme.colors.primary} />
+        {item.coverImage ? (
+          <Image source={{ uri: item.coverImage }} style={styles.coverImage} />
+        ) : (
+          <Ionicons name="musical-notes-outline" size={24} color={theme.colors.primary} />
+        )}
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.songTitle} numberOfLines={1}>{item.title}</Text>
@@ -74,7 +79,7 @@ export default function SearchScreen() {
         <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
         <TextInput
           style={styles.input}
-          placeholder="Search by Song or Artist..."
+          placeholder="Search by Song, Artist, or Album..."
           placeholderTextColor={theme.colors.textSecondary}
           value={query}
           onChangeText={setQuery}
@@ -158,6 +163,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
+    overflow: 'hidden'
+  },
+  coverImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover'
   },
   songTitle: {
     fontSize: 16,
