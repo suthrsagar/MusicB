@@ -263,7 +263,7 @@ const SettingsScreen = ({ navigation }) => {
             <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.colors.text }}>Sagar Jangid</Text>
             <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>Developer</Text>
             <TouchableOpacity
-              onPress={() => Linking.openURL('https://www.instagram.com/Sagar_jangid710')}
+              onPress={() => Linking.openURL('https://instagram.fudr2-1.fna.fbcdn.net/v/t51.2885-19/475284433_1686431242278803_1390820093851091504_n.jpg?stp=dst-jpg_s150x150_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMxIn0&_nc_ht=instagram.fudr2-1.fna.fbcdn.net&_nc_cat=111&_nc_oc=Q6cZ2QHjMoL2ETf0AzHwqsEIOHrbhj5_r3Nc4SGSZyiFLGXcX8mH0V12EClYsjfxiU1xzs_qDJhbI7qROtFdwqxrImPH&_nc_ohc=75eHYvCTKb8Q7kNvwFp5PgC&_nc_gid=qZLaZ_mahmYR6BCsRsj76A&edm=AP4sbd4BAAAA&ccb=7-5&oh=00_Afmj5-iUhW7L5UxuRg3ODP3iJ9hPbV_Ez-J-_PFSDbD91Q&oe=6955BEFB&_nc_sid=7a9f4b')}
               style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}
             >
               <Ionicons name="logo-instagram" size={12} color="#E1306C" />

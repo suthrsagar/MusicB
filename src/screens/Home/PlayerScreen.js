@@ -179,8 +179,31 @@ const PlayerScreen = ({ route, navigation }) => {
 
       const ret = RNFS.downloadFile(options);
 
-      ret.promise.then((res) => {
-        Alert.alert('Download Complete', `Saved to ${path}`);
+      ret.promise.then(async (res) => {
+        try {
+          const stored = await AsyncStorage.getItem('downloadedSongs');
+          const downloads = stored ? JSON.parse(stored) : [];
+
+          const newDownload = {
+            id: activeSong._id,
+            title: activeSong.title,
+            artist: activeSong.artist,
+            coverImage: activeSong.coverImage,
+            filePath: path,
+            fileId: activeSong.fileId,
+            downloadDate: new Date().toISOString()
+          };
+
+          const exists = downloads.some(d => d.id === activeSong._id);
+          if (!exists) {
+            downloads.push(newDownload);
+            await AsyncStorage.setItem('downloadedSongs', JSON.stringify(downloads));
+          }
+
+          Alert.alert('Download Complete', 'Song saved to Downloads.');
+        } catch (err) {
+          console.error("Error saving metadata", err);
+        }
       }).catch((err) => {
         console.error(err);
         Alert.alert('Download Failed', 'Could not save the file.');

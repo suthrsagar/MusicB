@@ -6,6 +6,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
 
 import { BASE_URL } from '../../services/apiConfig';
+import { useMusic } from '../../context/MusicContext';
 
 export default function SearchScreen() {
   const navigation = useNavigation();
@@ -13,6 +14,7 @@ export default function SearchScreen() {
   const [allSongs, setAllSongs] = useState([]);
   const [filteredSongs, setFilteredSongs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { playSong } = useMusic();
 
   useEffect(() => {
     fetchSongs();
@@ -50,7 +52,9 @@ export default function SearchScreen() {
     <TouchableOpacity
       style={styles.card}
       activeOpacity={0.7}
-      onPress={() => navigation.navigate('PlayerScreen', { song: item })}
+      onPress={() => {
+        playSong(item, allSongs);
+      }}
     >
       <View style={styles.iconContainer}>
         {item.coverImage ? (
@@ -71,52 +75,56 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      {/* Invisible closer for the top transparent area if needed, or just the background */}
+      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => navigation.goBack()} />
 
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Search</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <View style={styles.contentContainer}>
+        <StatusBar barStyle="dark-content" backgroundColor="rgba(0,0,0,0.5)" />
 
-      <View style={styles.searchBarContainer}>
-        <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
-        <TextInput
-          style={styles.input}
-          placeholder="Search by Song, Artist, or Album..."
-          placeholderTextColor={theme.colors.textSecondary}
-          value={query}
-          onChangeText={setQuery}
-          autoFocus={true}
-        />
-        {query.length > 0 && (
-          <TouchableOpacity onPress={() => setQuery('')}>
-            <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>Search</Text>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="close-circle" size={30} color={theme.colors.textSecondary} />
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.searchBarContainer}>
+          <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Search by Song, Artist, or Album..."
+            placeholderTextColor={theme.colors.textSecondary}
+            value={query}
+            onChangeText={setQuery}
+            autoFocus={true}
+          />
+          {query.length > 0 && (
+            <TouchableOpacity onPress={() => setQuery('')}>
+              <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {loading ? (
+          <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />
+        ) : (
+          <FlatList
+            data={filteredSongs}
+            keyExtractor={(item) => item._id}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.noResult}>
+                <Ionicons name="search" size={50} color={theme.colors.border} />
+                <Text style={{ color: theme.colors.textSecondary, marginTop: 10 }}>
+                  No results found for "{query}"
+                </Text>
+              </View>
+            }
+          />
         )}
       </View>
-
-      {loading ? (
-        <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />
-      ) : (
-        <FlatList
-          data={filteredSongs}
-          keyExtractor={(item) => item._id}
-          renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.noResult}>
-              <Ionicons name="search" size={50} color={theme.colors.border} />
-              <Text style={{ color: theme.colors.textSecondary, marginTop: 10 }}>
-                No results found for "{query}"
-              </Text>
-            </View>
-          }
-        />
-      )}
     </View>
   );
 }
@@ -124,16 +132,31 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)', // Dimmed background
+    justifyContent: 'flex-end', // Align content to bottom? Or user said "half screen", maybe top? Let's do a top sheet or center. User usually expects search at top. Let's do top half.
+    // Actually, "half homescreen" usually implies a bottom sheet or a top drawer. Given search bar is at top, let's make it a Top Sheet.
+    justifyContent: 'flex-start',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  contentContainer: {
+    height: '60%', // Takes up top 60% of screen
     backgroundColor: theme.colors.background,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
     paddingHorizontal: 20,
     paddingTop: 10,
+    elevation: 10,
+    ...theme.shadows.medium,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 20,
-    marginTop: 10
+    marginTop: 10 // safe area fix might be needed
   },
   headerTitle: {
     ...theme.typography.header,

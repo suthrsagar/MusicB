@@ -6,13 +6,18 @@ import { useMusic } from '../../context/MusicContext';
 import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { useIsFocused } from '@react-navigation/native';
+
 const DownloadScreen = ({ navigation }) => {
     const { playSong } = useMusic();
     const [downloadedSongs, setDownloadedSongs] = useState([]);
+    const isFocused = useIsFocused();
 
     useEffect(() => {
-        fetchDownloadedSongs();
-    }, []);
+        if (isFocused) {
+            fetchDownloadedSongs();
+        }
+    }, [isFocused]);
 
     const fetchDownloadedSongs = async () => {
         try {

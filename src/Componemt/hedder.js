@@ -60,14 +60,16 @@ const Header = () => {
                     </View>
                 </View>
 
-                <TouchableOpacity style={[styles.iconBtn, { marginRight: 10 }]} onPress={() => navigation.navigate('Search')}>
-                    <Icon name="search-outline" size={26} color={theme.colors.text} />
-                </TouchableOpacity>
+                <View style={styles.rightIcons}>
+                    <TouchableOpacity style={[styles.iconBtn, { marginRight: 15 }]} onPress={() => navigation.navigate('Search')}>
+                        <Icon name="search-outline" size={24} color={theme.colors.text} />
+                    </TouchableOpacity>
 
-                <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('NotificationScreen')}>
-                    <Icon name="notifications-outline" size={26} color={theme.colors.text} />
-                    {hasUnread && <View style={styles.badge} />}
-                </TouchableOpacity>
+                    <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('NotificationScreen')}>
+                        <Icon name="notifications-outline" size={24} color={theme.colors.text} />
+                        {hasUnread && <View style={styles.badge} />}
+                    </TouchableOpacity>
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -77,13 +79,11 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+
         paddingHorizontal: 24,
         paddingVertical: 30,
         backgroundColor: theme.colors.surface,
-        ...theme.shadows.medium,
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
+
     },
     logoContainer: {
         flexDirection: 'row',
@@ -123,14 +123,18 @@ const styles = StyleSheet.create({
     },
     badge: {
         position: 'absolute',
-        top: 10,
-        right: 12,
+        top: 8,
+        right: 10,
         width: 10,
         height: 10,
         borderRadius: 5,
         backgroundColor: theme.colors.error,
         borderWidth: 1.5,
         borderColor: theme.colors.surface,
+    },
+    rightIcons: {
+        flexDirection: 'row',
+        alignItems: 'center'
     }
 });
 

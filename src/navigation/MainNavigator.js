@@ -26,6 +26,7 @@ import AdminFeedbackScreen from '../screens/Admin/AdminFeedbackScreen';
 import AdminChatScreen from '../screens/Admin/AdminChatScreen';
 import Premium from '../screens/premium/Premium';
 import PlaylistDetailScreen from '../screens/Playlist/PlaylistDetailScreen';
+import SearchScreen from '../screens/Search/SearchScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -185,6 +186,15 @@ const MainNavigator = () => {
                 name="PlaylistDetailScreen"
                 component={PlaylistDetailScreen}
                 options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="Search"
+                component={SearchScreen}
+                options={{
+                    headerShown: false,
+                    presentation: 'transparentModal',
+                    animation: 'fade',
+                }}
             />
         </Stack.Navigator>
     );

@@ -10,7 +10,7 @@ import ProfileScreen from '../screens/Settings/ProfileScreen';
 import SettingsScreen from '../screens/Settings/SettingsScreen';
 import Header from '../Componemt/hedder';
 
-import { View } from 'react-native';
+
 import { View } from 'react-native';
 import MiniPlayer from '../Componemt/MiniPlayer';
 import DownloadScreen from '../screens/Downloads/DownloadScreen';
@@ -26,15 +26,10 @@ const TabNavigator = () => {
                         let iconName;
                         if (route.name === 'Home') {
                             iconName = focused ? 'home' : 'home-outline';
-                        } else if (route.name === 'Search') {
-                            iconName = focused ? 'search' : 'search-outline';
                         } else if (route.name === 'Playlist') {
                             iconName = focused ? 'musical-notes' : 'musical-notes-outline';
                         } else if (route.name === 'Profile') {
                             iconName = focused ? 'person' : 'person-outline';
-                        }
-                        else if (route.name === 'Settings') {
-                            iconName = focused ? 'settings' : 'settings-outline';
                         } else if (route.name === 'Settings') {
                             iconName = focused ? 'settings' : 'settings-outline';
                         } else if (route.name === 'Downloads') {
@@ -62,11 +57,11 @@ const TabNavigator = () => {
                     headerShown: true,
                 })}
             >
-                <Tab.Screen name="Settings" component={SettingsScreen} />
                 <Tab.Screen name="Home" component={HomeScreen} />
                 <Tab.Screen name="Playlist" component={PlaylistScreen} />
                 <Tab.Screen name="Downloads" component={DownloadScreen} />
                 <Tab.Screen name="Profile" component={ProfileScreen} />
+                <Tab.Screen name="Settings" component={SettingsScreen} />
             </Tab.Navigator>
             <MiniPlayer />
         </View>
