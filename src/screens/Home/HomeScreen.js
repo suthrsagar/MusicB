@@ -19,6 +19,8 @@ import { theme } from '../../theme';
 import { BASE_URL } from '../../services/apiConfig';
 
 import { useMusic } from '../../context/MusicContext';
+import RoundedLoader from '../../components/RoundedLoader';
+import CustomAlert from '../../components/CustomAlert';
 
 const SongItem = React.memo(({ item, onPress }) => (
   <TouchableOpacity
@@ -57,6 +59,11 @@ const HomeScreen = () => {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'info' });
+
+  const showAlert = (title, message, type = 'info') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
 
   const fetchSongs = async () => {
     try {
@@ -66,10 +73,10 @@ const HomeScreen = () => {
       console.error('Error fetching songs:', error);
       if (!error.response) {
         // Network error / Offline
-        Alert.alert('Offline Mode', 'You are currently offline. Check your downloaded songs in the Downloads tab!');
+        showAlert('Offline Mode', 'You are currently offline. Check your downloaded songs in the Downloads tab!', 'info');
       } else {
         const msg = error.response?.data?.msg || error.message || 'Failed to load songs';
-        Alert.alert('Error', msg);
+        showAlert('Error', msg, 'error');
       }
     } finally {
       setLoading(false);
@@ -104,7 +111,7 @@ const HomeScreen = () => {
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <RoundedLoader percentage={100} size={100} />
       </View>
     );
   }
@@ -142,6 +149,13 @@ const HomeScreen = () => {
           contentContainerStyle={styles.listContainer}
         />
       )}
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+      />
     </View>
   );
 };

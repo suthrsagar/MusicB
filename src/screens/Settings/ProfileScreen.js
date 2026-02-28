@@ -22,6 +22,8 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
 import { useMusic } from '../../context/MusicContext';
+import RoundedLoader from '../../components/RoundedLoader';
+import CustomAlert from '../../components/CustomAlert';
 
 import { BASE_URL } from '../../services/apiConfig';
 const API_URL = `${BASE_URL}/api/`;
@@ -45,6 +47,18 @@ const ProfileScreen = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [profile, setProfile] = useState(null);
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+    onConfirm: null,
+    cancelable: false
+  });
+
+  const showAlert = (title, message, type = 'info', onConfirm = null, cancelable = false) => {
+    setAlertConfig({ visible: true, title, message, type, onConfirm, cancelable });
+  };
 
   const { closePlayer } = useMusic();
 
@@ -90,7 +104,7 @@ const ProfileScreen = ({ navigation }) => {
   const pickImage = async () => {
     const ok = await requestPermission();
     if (!ok) {
-      Alert.alert('Permission denied');
+      showAlert('Permission Denied', 'Please grant storage permissions to pick an image.', 'error');
       return;
     }
     launchImageLibrary({ mediaType: 'photo', quality: 0.8 }, res => {
@@ -102,7 +116,7 @@ const ProfileScreen = ({ navigation }) => {
 
   const handleRegister = async () => {
     if (!username || !email || !password || !imageUri) {
-      Alert.alert('All fields & profile photo required');
+      showAlert('Required Fields', 'All fields and a profile photo are mandatory for registration.', 'warning');
       return;
     }
     setBtnLoading(true);
@@ -123,7 +137,7 @@ const ProfileScreen = ({ navigation }) => {
         });
       }
 
-      Alert.alert('Success', 'Account created!');
+      showAlert('Success', 'Account created! Welcome to MusicZ.', 'success');
       navigation.replace('Tabs');
     } catch (err) {
       setError(err.response?.data?.msg || 'Registration failed');
@@ -135,7 +149,7 @@ const ProfileScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Email & password required');
+      showAlert('Required Fields', 'Email and password are required to login.', 'warning');
       return;
     }
     setBtnLoading(true);
@@ -175,7 +189,7 @@ const ProfileScreen = ({ navigation }) => {
         if (err.response.status === 401 || err.response.status === 404) {
           handleLogout();
         } else {
-          Alert.alert('Error', 'Could not sync profile. Showing cached data.');
+          showAlert('Sync Error', 'Could not sync profile with server. Showing cached data.', 'error');
         }
       } else {
         // No response means network error / offline
@@ -185,16 +199,24 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem('token');
-    await AsyncStorage.removeItem('cachedProfile');
-    setIsLoggedIn(false);
-    setProfile(null);
-    setUsername(''); setEmail(''); setPassword(''); setImageUri(null);
-    try {
-      closePlayer();
-      await messaging().unsubscribeFromTopic('admin_notifications');
-    } catch (e) { }
-    navigation.reset({ index: 0, routes: [{ name: 'LoginProfile' }] });
+    showAlert(
+      'Logout',
+      'Are you sure you want to logout?',
+      'warning',
+      async () => {
+        await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('cachedProfile');
+        setIsLoggedIn(false);
+        setProfile(null);
+        setUsername(''); setEmail(''); setPassword(''); setImageUri(null);
+        try {
+          closePlayer();
+          await messaging().unsubscribeFromTopic('admin_notifications');
+        } catch (e) { }
+        navigation.reset({ index: 0, routes: [{ name: 'LoginProfile' }] });
+      },
+      true
+    );
   };
 
   const getAvatarUrl = () => {
@@ -215,7 +237,7 @@ const ProfileScreen = ({ navigation }) => {
   const handleUpdateProfilePhoto = async () => {
     const ok = await requestPermission();
     if (!ok) {
-      Alert.alert('Permission denied');
+      showAlert('Permission Denied', 'Storage permission is required to update photo.', 'error');
       return;
     }
 
@@ -239,11 +261,11 @@ const ProfileScreen = ({ navigation }) => {
 
           if (response.data && response.data.avatar) {
             setProfile(prev => ({ ...prev, avatar: response.data.avatar }));
-            Alert.alert('Success', 'Profile photo updated successfully!');
+            showAlert('Success', 'Profile photo updated successfully!', 'success');
           }
         } catch (err) {
           console.error('Upload Error:', err.response?.data || err.message);
-          Alert.alert('Error', err.response?.data?.msg || 'Could not upload photo');
+          showAlert('Upload Failed', err.response?.data?.msg || 'Could not upload photo', 'error');
         } finally {
           setBtnLoading(false);
         }
@@ -253,28 +275,28 @@ const ProfileScreen = ({ navigation }) => {
 
   const handleChangePassword = async () => {
     if (!oldPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Error', 'Please fill all fields');
+      showAlert('Error', 'Please fill all fields', 'error');
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match');
+      showAlert('Error', 'New passwords do not match', 'error');
       return;
     }
     if (newPassword.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      showAlert('Error', 'Password must be at least 6 characters', 'error');
       return;
     }
 
     setBtnLoading(true);
     try {
       await api.post('change-password', { oldPassword, newPassword });
-      Alert.alert('Success', 'Password updated successfully');
+      showAlert('Success', 'Password updated successfully', 'success');
       setShowPasswordModal(false);
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.msg || 'Failed to update password');
+      showAlert('Error', err.response?.data?.msg || 'Failed to update password', 'error');
     } finally {
       setBtnLoading(false);
     }
@@ -283,7 +305,7 @@ const ProfileScreen = ({ navigation }) => {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <RoundedLoader percentage={100} size={100} />
       </View>
     );
   }
@@ -582,6 +604,19 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        confirmText={alertConfig.cancelable ? (alertConfig.title === 'Logout' ? 'Logout' : 'Confirm') : 'OK'}
+        onClose={() => {
+          setAlertConfig({ ...alertConfig, visible: false });
+          if (alertConfig.onConfirm) alertConfig.onConfirm();
+        }}
+        onCancel={alertConfig.cancelable ? () => setAlertConfig({ ...alertConfig, visible: false }) : null}
+      />
     </ScrollView>
   );
 };

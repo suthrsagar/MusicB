@@ -11,7 +11,8 @@ import {
   Image,
   Platform,
   Modal,
-  FlatList
+  FlatList,
+  Dimensions
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import Slider from '@react-native-community/slider';
@@ -21,8 +22,12 @@ import { theme } from '../../theme';
 import { useMusic } from '../../context/MusicContext';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import RoundedLoader from '../../components/RoundedLoader';
+import CustomAlert from '../../components/CustomAlert';
 
 import { BASE_URL } from '../../services/apiConfig';
+
+const { width } = Dimensions.get('window');
 
 const PlayerScreen = ({ route, navigation }) => {
   const { song, playlist } = route.params || {};
@@ -44,6 +49,13 @@ const PlayerScreen = ({ route, navigation }) => {
 
   const [sleepTimer, setSleepTimer] = useState(null);
   const [showSleepModal, setShowSleepModal] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'info' });
+
+  const showAlert = (title, message, type = 'info') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
 
   useEffect(() => {
     let timer;
@@ -53,7 +65,7 @@ const PlayerScreen = ({ route, navigation }) => {
       timer = setTimeout(() => {
         if (isPlaying) togglePlayPause();
         setSleepTimer(null);
-        Alert.alert('Sleep Timer', 'Music stopped.');
+        showAlert('Sleep Timer', 'Music stopped.', 'info');
       }, ms);
     }
     return () => clearTimeout(timer);
@@ -112,7 +124,7 @@ const PlayerScreen = ({ route, navigation }) => {
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) {
-        Alert.alert('Login Required', 'Please login to like this song.');
+        showAlert('Login Required', 'Please login to like this song.', 'error');
         return;
       }
 
@@ -126,7 +138,7 @@ const PlayerScreen = ({ route, navigation }) => {
     } catch (e) {
       console.error(e);
       const msg = e.response?.data?.msg || 'Could not like song';
-      Alert.alert('Like Error', msg);
+      showAlert('Like Error', msg, 'error');
     }
   };
 
@@ -158,7 +170,8 @@ const PlayerScreen = ({ route, navigation }) => {
       const streamUrl = `${BASE_URL}/api/song/stream/${activeSong.fileId}`;
       const token = await AsyncStorage.getItem('token');
 
-      Alert.alert('Downloading', `Adding ${activeSong.title} to your library...`);
+      setIsDownloading(true);
+      setDownloadProgress(0);
 
       const options = {
         fromUrl: streamUrl,
@@ -166,11 +179,16 @@ const PlayerScreen = ({ route, navigation }) => {
         headers: token ? { 'x-auth-token': token } : {},
         background: true,
         discretionary: true,
+        progress: (res) => {
+          const progress = (res.bytesWritten / res.contentLength) * 100;
+          setDownloadProgress(progress);
+        }
       };
 
       const ret = RNFS.downloadFile(options);
 
       ret.promise.then(async (res) => {
+        setIsDownloading(false);
         try {
           const stored = await AsyncStorage.getItem('downloadedSongs');
           const downloads = stored ? JSON.parse(stored) : [];
@@ -191,18 +209,20 @@ const PlayerScreen = ({ route, navigation }) => {
             await AsyncStorage.setItem('downloadedSongs', JSON.stringify(downloads));
           }
 
-          Alert.alert('Download Complete', 'Song saved to your app library.');
+          showAlert('Download Complete', 'Song saved to your app library.', 'success');
         } catch (err) {
           console.error("Error saving metadata", err);
         }
       }).catch((err) => {
+        setIsDownloading(false);
         console.error(err);
-        Alert.alert('Download Failed', 'Could not save the file.');
+        showAlert('Download Failed', 'Could not save the file.', 'error');
       });
 
     } catch (e) {
+      setIsDownloading(false);
       console.error(e);
-      Alert.alert('Error', 'An error occurred while downloading.');
+      showAlert('Error', 'An error occurred while downloading.', 'error');
     }
   };
 
@@ -236,7 +256,7 @@ const PlayerScreen = ({ route, navigation }) => {
               onPress={() => {
                 setSleepTimer(option.value);
                 setShowSleepModal(false);
-                if (option.value) Alert.alert('Sleep Timer Set', `Playback will stop in ${option.label}`);
+                if (option.value) showAlert('Sleep Timer Set', `Playback will stop in ${option.label}`, 'info');
               }}
             >
               <Text style={[
@@ -261,7 +281,7 @@ const PlayerScreen = ({ route, navigation }) => {
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) {
-        Alert.alert('Login Required', 'Please login to add to playlist.');
+        showAlert('Login Required', 'Please login to add to playlist.', 'error');
         return;
       }
       const res = await axios.get(`${BASE_URL}/api/playlist/me`, {
@@ -270,7 +290,7 @@ const PlayerScreen = ({ route, navigation }) => {
       setMyPlaylists(res.data);
       setShowPlaylistModal(true);
     } catch (e) {
-      Alert.alert('Error', 'Could not fetch playlists');
+      showAlert('Error', 'Could not fetch playlists', 'error');
     }
   };
 
@@ -281,10 +301,10 @@ const PlayerScreen = ({ route, navigation }) => {
         { songId: activeSong._id },
         { headers: { 'x-auth-token': token } }
       );
-      Alert.alert('Success', 'Song added to playlist');
+      showAlert('Success', 'Song added to playlist', 'success');
       setShowPlaylistModal(false);
     } catch (e) {
-      Alert.alert('Error', 'Could not add to playlist');
+      showAlert('Error', 'Could not add to playlist', 'error');
     }
   };
 
@@ -331,106 +351,128 @@ const PlayerScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
+      {/* Blurred Background */}
+      <View style={StyleSheet.absoluteFill}>
+        {activeSong.coverImage ? (
+          <Image
+            source={{ uri: activeSong.coverImage }}
+            style={styles.backgroundImage}
+            blurRadius={Platform.OS === 'ios' ? 20 : 10}
+          />
+        ) : (
+          <View style={[styles.backgroundImage, { backgroundColor: '#121212' }]} />
+        )}
+        <View style={styles.backgroundOverlay} />
+      </View>
 
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-          <Ionicons name="chevron-down" size={30} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Now Playing</Text>
-        <View style={{ flexDirection: 'row' }}>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+            <Ionicons name="chevron-down" size={32} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Now Playing</Text>
           <TouchableOpacity style={styles.iconButton} onPress={downloadSong}>
-            <Ionicons name="cloud-download-outline" size={28} color={theme.colors.text} />
+            <Ionicons name="cloud-download-outline" size={28} color="#fff" />
           </TouchableOpacity>
         </View>
-      </View>
 
-
-      <View style={styles.artworkContainer}>
-        <View style={styles.artwork}>
-          {activeSong.coverImage ? (
-            <Image source={{ uri: activeSong.coverImage }} style={styles.coverImage} resizeMode="cover" />
-          ) : (
-            <Ionicons name="musical-notes" size={100} color="#fff" />
-          )}
-        </View>
-      </View>
-
-
-      <View style={styles.infoContainer}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '80%' }}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.title} numberOfLines={1}>{activeSong.title}</Text>
-            <Text style={styles.artist} numberOfLines={1}>{activeSong.artist}</Text>
+        <View style={styles.artworkContainer}>
+          <View style={styles.artworkShadow}>
+            <View style={styles.artwork}>
+              {activeSong.coverImage ? (
+                <Image source={{ uri: activeSong.coverImage }} style={styles.coverImage} resizeMode="cover" />
+              ) : (
+                <Ionicons name="musical-notes" size={120} color="rgba(255,255,255,0.3)" />
+              )}
+            </View>
           </View>
 
-          <TouchableOpacity onPress={handleLike} style={{ padding: 10, alignItems: 'center' }}>
-            <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? theme.colors.error : theme.colors.textSecondary} />
-            <Text style={{ fontSize: 12, color: theme.colors.textSecondary, fontWeight: '600', marginTop: 2 }}>
-              {likesCount}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
-          <Ionicons name="play" size={12} color={theme.colors.textSecondary} />
-          <Text style={{ color: theme.colors.textSecondary, fontSize: 12, marginLeft: 4 }}>
-            {viewsCount + (isPlaying ? 1 : 0)} Plays
-          </Text>
-        </View>
-      </View>
-
-
-      <View style={styles.sliderContainer}>
-        <Slider
-          style={styles.slider}
-          minimumValue={0}
-          maximumValue={progress.duration || 1}
-          value={progress.position}
-          minimumTrackTintColor={theme.colors.primary}
-          maximumTrackTintColor={theme.colors.border}
-          thumbTintColor={theme.colors.primary}
-          onSlidingComplete={seekTo}
-        />
-        <View style={styles.timeContainer}>
-          <Text style={styles.timeText}>{formatTime(progress.position)}</Text>
-          <Text style={styles.timeText}>{formatTime(progress.duration)}</Text>
-        </View>
-      </View>
-
-
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity style={styles.secondaryControl} onPress={playPrev}>
-          <Ionicons name="play-skip-back" size={30} color={theme.colors.text} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.playButton} onPress={togglePlayPause} disabled={loading}>
-          {loading ? (
-            <ActivityIndicator color="#fff" size="large" />
-          ) : (
-            <Ionicons name={isPlaying ? "pause" : "play"} size={45} color="#fff" />
+          {isDownloading && (
+            <View style={styles.loaderOverlay}>
+              <RoundedLoader percentage={downloadProgress} size={150} />
+            </View>
           )}
-        </TouchableOpacity>
+        </View>
 
-        <TouchableOpacity style={styles.secondaryControl} onPress={playNext}>
-          <Ionicons name="play-skip-forward" size={30} color={theme.colors.text} />
-        </TouchableOpacity>
+        <View style={styles.glassContainer}>
+          <View style={styles.infoContainer}>
+            <View style={styles.titleRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.title} numberOfLines={1}>{activeSong.title}</Text>
+                <Text style={styles.artist} numberOfLines={1}>{activeSong.artist}</Text>
+              </View>
+              <TouchableOpacity onPress={handleLike} style={styles.likeBtn}>
+                <Ionicons name={liked ? "heart" : "heart-outline"} size={32} color={liked ? "#FF4B4B" : "#fff"} />
+                <Text style={styles.likesText}>{likesCount}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.statsRow}>
+              <Ionicons name="play" size={14} color="rgba(255,255,255,0.5)" />
+              <Text style={styles.statsText}>{viewsCount + (isPlaying ? 1 : 0)} Plays</Text>
+            </View>
+          </View>
+
+          <View style={styles.sliderSection}>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={progress.duration || 1}
+              value={progress.position}
+              minimumTrackTintColor={theme.colors.primary}
+              maximumTrackTintColor="rgba(255,255,255,0.2)"
+              thumbTintColor="#fff"
+              onSlidingComplete={seekTo}
+            />
+            <View style={styles.timeRow}>
+              <Text style={styles.timeText}>{formatTime(progress.position)}</Text>
+              <Text style={styles.timeText}>{formatTime(progress.duration)}</Text>
+            </View>
+          </View>
+
+          <View style={styles.controlsRow}>
+            <TouchableOpacity style={styles.sideControl} onPress={playPrev}>
+              <Ionicons name="play-back" size={35} color="#fff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.mainPlayBtn} onPress={togglePlayPause} disabled={loading}>
+              <View style={styles.playInner}>
+                {loading ? (
+                  <ActivityIndicator color="#fff" size="large" />
+                ) : (
+                  <Ionicons name={isPlaying ? "pause" : "play"} size={50} color="#fff" style={!isPlaying && { marginLeft: 5 }} />
+                )}
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.sideControl} onPress={playNext}>
+              <Ionicons name="play-forward" size={35} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.footerActions}>
+            <TouchableOpacity style={styles.footerActionBtn} onPress={fetchPlaylists}>
+              <Ionicons name="list" size={24} color="#fff" />
+              <Text style={styles.footerActionText}>Playlist</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.footerActionBtn} onPress={() => setShowSleepModal(true)}>
+              <Ionicons name="timer-outline" size={24} color="#fff" />
+              <Text style={styles.footerActionText}>{sleepTimer ? `${sleepTimer}m` : 'Timer'}</Text>
+            </TouchableOpacity>
+            <VolumeController />
+          </View>
+        </View>
       </View>
 
-
-      <View style={styles.footerOptions}>
-        <TouchableOpacity style={styles.footerBtn} onPress={fetchPlaylists}>
-          <Ionicons name="add-circle-outline" size={26} color={theme.colors.text} />
-          <Text style={styles.footerBtnText}>Playlist</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.footerBtn} onPress={() => setShowSleepModal(true)}>
-          <Ionicons name="timer-outline" size={26} color={theme.colors.text} />
-          <Text style={styles.footerBtnText}>Timer</Text>
-        </TouchableOpacity>
-      </View>
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+      />
       {renderSleepTimerModal()}
       {renderPlaylistModal()}
     </View>
@@ -442,8 +484,21 @@ export default PlayerScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
-    padding: 20,
+    backgroundColor: '#000',
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+    opacity: 0.5,
+  },
+  backgroundOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  content: {
+    flex: 1,
+    paddingTop: StatusBar.currentHeight + 20,
+    paddingHorizontal: 25,
     justifyContent: 'space-between',
     paddingBottom: 40,
   },
@@ -451,152 +506,225 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10,
+    marginBottom: 20,
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
-    color: theme.colors.textSecondary,
+    color: 'rgba(255,255,255,0.6)',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 2,
   },
   iconButton: {
-    padding: 10,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   artworkContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
+    marginVertical: 30,
+  },
+  artworkShadow: {
+    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.5,
+    shadowRadius: 30,
+    elevation: 25,
   },
   artwork: {
-    width: 280,
-    height: 280,
+    width: width * 0.75,
+    height: width * 0.75,
     borderRadius: 30,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 20,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   coverImage: {
     width: '100%',
-    height: '100%'
+    height: '100%',
+  },
+  loaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 30,
+    zIndex: 10,
+  },
+  glassContainer: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 35,
+    padding: 25,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
   },
   infoContainer: {
-    alignItems: 'center',
     marginBottom: 20,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '800',
-    color: theme.colors.text,
-    textAlign: 'left',
+    color: '#fff',
+    letterSpacing: -0.5,
   },
   artist: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
+    fontSize: 18,
+    color: 'rgba(255,255,255,0.6)',
     fontWeight: '500',
-    textAlign: 'left',
+    marginTop: 4,
   },
-  sliderContainer: {
-    marginBottom: 30,
+  likeBtn: {
+    alignItems: 'center',
+    marginLeft: 15,
+  },
+  likesText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  statsText: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 12,
+    marginLeft: 6,
+    fontWeight: '600',
+  },
+  sliderSection: {
+    marginVertical: 15,
   },
   slider: {
     width: '100%',
-    height: 40,
+    height: 30,
   },
-  timeContainer: {
+  timeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
+    marginTop: -5,
   },
   timeText: {
     fontSize: 12,
-    color: theme.colors.textSecondary,
+    color: 'rgba(255,255,255,0.5)',
     fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
-  controlsContainer: {
+  controlsRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginVertical: 15,
   },
-  playButton: {
-    width: 80,
-    height: 80,
+  mainPlayBtn: {
+    width: 85,
+    height: 85,
+    borderRadius: 43,
+    backgroundColor: theme.colors.primary,
+    padding: 3,
+  },
+  playInner: {
+    flex: 1,
     borderRadius: 40,
     backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 40,
-    elevation: 10,
-    shadowColor: theme.colors.primary,
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 }
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
-  secondaryControl: {
-    padding: 10,
+  sideControl: {
+    width: 55,
+    height: 55,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  footerActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+    paddingTop: 20,
+  },
+  footerActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+  },
+  footerActionText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.8)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 24,
+    backgroundColor: '#1A1A1A',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    padding: 30,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 25,
     textAlign: 'center',
-    color: theme.colors.text
+    color: '#fff',
   },
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 15,
+    paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
+    borderBottomColor: 'rgba(255,255,255,0.05)',
   },
   modalOptionSelected: {
-    backgroundColor: theme.colors.primary + '10',
-    paddingHorizontal: 10,
-    marginHorizontal: -10,
-    borderRadius: 10,
-    borderBottomWidth: 0
+    backgroundColor: 'rgba(67, 24, 255, 0.15)',
+    paddingHorizontal: 15,
+    marginHorizontal: -15,
+    borderRadius: 15,
+    borderBottomWidth: 0,
   },
   modalOptionText: {
-    fontSize: 16,
-    color: theme.colors.text,
+    fontSize: 17,
+    color: 'rgba(255,255,255,0.8)',
   },
   modalOptionTextSelected: {
     color: theme.colors.primary,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
-  footerOptions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 10,
-    paddingHorizontal: 30
-  },
-  footerBtn: {
-    alignItems: 'center',
-    padding: 10
-  },
-  footerBtnText: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 5,
-    fontWeight: '600'
-  }
 });

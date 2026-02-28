@@ -5,13 +5,21 @@ import { theme } from '../../theme';
 import { useMusic } from '../../context/MusicContext';
 import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import RoundedLoader from '../../components/RoundedLoader';
+import CustomAlert from '../../components/CustomAlert';
 
 import { useIsFocused } from '@react-navigation/native';
 
 const DownloadScreen = ({ navigation }) => {
     const { playSong } = useMusic();
     const [downloadedSongs, setDownloadedSongs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'info', onConfirm: null, cancelable: false });
     const isFocused = useIsFocused();
+
+    const showAlert = (title, message, type = 'info', onConfirm = null, cancelable = false) => {
+        setAlertConfig({ visible: true, title, message, type, onConfirm, cancelable });
+    };
 
     useEffect(() => {
         if (isFocused) {
@@ -21,15 +29,16 @@ const DownloadScreen = ({ navigation }) => {
 
     const fetchDownloadedSongs = async () => {
         try {
-            // Logic to fetch downloaded songs
-            // This assumes you store metadata of downloaded songs in AsyncStorage
-            // and the actual files in the filesystem.
+            setLoading(true);
             const storedDownloads = await AsyncStorage.getItem('downloadedSongs');
             if (storedDownloads) {
                 setDownloadedSongs(JSON.parse(storedDownloads));
             }
         } catch (error) {
             console.error("Failed to load downloads", error);
+            showAlert('Error', 'Failed to load your offline library.', 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -49,10 +58,13 @@ const DownloadScreen = ({ navigation }) => {
                 <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
                 <Text style={styles.artist}>{item.artist}</Text>
             </View>
-            <TouchableOpacity onPress={() => Alert.alert('Delete', 'Delete this song?', [
-                { text: 'Cancel' },
-                { text: 'Delete', onPress: () => deleteDownload(item.id) }
-            ])}>
+            <TouchableOpacity onPress={() => showAlert(
+                'Delete Song',
+                `Remove "${item.title}" from your downloads?`,
+                'warning',
+                () => deleteDownload(item.id),
+                true
+            )}>
                 <Ionicons name="trash-outline" size={24} color={theme.colors.error} />
             </TouchableOpacity>
         </TouchableOpacity>
@@ -76,13 +88,21 @@ const DownloadScreen = ({ navigation }) => {
                 await AsyncStorage.setItem('downloadedSongs', JSON.stringify(updatedDownloads));
                 setDownloadedSongs(updatedDownloads);
 
-                Alert.alert("Deleted", "Song removed from downloads.");
+                showAlert("Deleted", "Song removed from downloads.", "success");
             }
         } catch (error) {
             console.error("Failed to delete song", error);
-            Alert.alert("Error", "Could not delete the song.");
+            showAlert("Error", "Could not delete the song.", "error");
         }
     };
+
+    if (loading) {
+        return (
+            <View style={styles.loaderContainer}>
+                <RoundedLoader percentage={100} size={100} />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -100,6 +120,18 @@ const DownloadScreen = ({ navigation }) => {
                     contentContainerStyle={styles.list}
                 />
             )}
+            <CustomAlert
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                confirmText={alertConfig.cancelable ? "Delete" : "OK"}
+                onClose={() => {
+                    setAlertConfig({ ...alertConfig, visible: false });
+                    if (alertConfig.onConfirm) alertConfig.onConfirm();
+                }}
+                onCancel={alertConfig.cancelable ? () => setAlertConfig({ ...alertConfig, visible: false }) : null}
+            />
         </View>
     );
 };
@@ -119,6 +151,12 @@ const styles = StyleSheet.create({
     },
     list: {
         paddingBottom: 100
+    },
+    loaderContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: theme.colors.background,
     },
     itemContainer: {
         flexDirection: 'row',
