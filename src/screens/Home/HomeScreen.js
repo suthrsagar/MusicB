@@ -21,6 +21,7 @@ import { BASE_URL } from '../../services/apiConfig';
 import { useMusic } from '../../context/MusicContext';
 import RoundedLoader from '../../components/RoundedLoader';
 import CustomAlert from '../../components/CustomAlert';
+import RealisticLoader from '../../components/RealisticLoader';
 
 const SongItem = React.memo(({ item, onPress }) => (
   <TouchableOpacity
@@ -109,11 +110,7 @@ const HomeScreen = () => {
   ), [handlePress]);
 
   if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <RoundedLoader percentage={100} size={100} />
-      </View>
-    );
+    return <RealisticLoader message="Discovering Music..." />;
   }
 
   return (
@@ -166,20 +163,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    paddingTop: 10,
-    paddingHorizontal: 20,
   },
   header: {
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 50,
+    paddingBottom: 20,
     ...theme.typography.header,
     color: theme.colors.text,
-    marginBottom: 20,
-    marginTop: 10,
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: theme.colors.background,
   },
   listContainer: {
     paddingBottom: 20,
@@ -230,6 +220,17 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderRadius: 15,
     elevation: 2,
+  },
+  songCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   emptyContainer: {
     flex: 1,

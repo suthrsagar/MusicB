@@ -7,6 +7,7 @@ import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RoundedLoader from '../../components/RoundedLoader';
 import CustomAlert from '../../components/CustomAlert';
+import RealisticLoader from '../../components/RealisticLoader';
 
 import { useIsFocused } from '@react-navigation/native';
 
@@ -97,11 +98,7 @@ const DownloadScreen = ({ navigation }) => {
     };
 
     if (loading) {
-        return (
-            <View style={styles.loaderContainer}>
-                <RoundedLoader percentage={100} size={100} />
-            </View>
-        );
+        return <RealisticLoader message="Exploring Offline..." />;
     }
 
     return (
@@ -147,10 +144,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: theme.colors.text,
         marginBottom: 20,
-        marginTop: 10
+        marginTop: 50,
+        paddingHorizontal: 20,
     },
     list: {
-        paddingBottom: 100
+        paddingBottom: 100,
+        paddingHorizontal: 20,
     },
     loaderContainer: {
         flex: 1,
@@ -161,11 +160,12 @@ const styles = StyleSheet.create({
     itemContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
+        backgroundColor: 'rgba(255,255,255,0.05)',
         padding: 12,
-        borderRadius: 12,
-        marginBottom: 10,
-        ...theme.shadows.soft
+        borderRadius: 18,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
     },
     artwork: {
         width: 50,

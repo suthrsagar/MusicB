@@ -19,11 +19,10 @@ import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { launchImageLibrary } from 'react-native-image-picker';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import { theme } from '../../theme';
 import { useMusic } from '../../context/MusicContext';
 import RoundedLoader from '../../components/RoundedLoader';
 import CustomAlert from '../../components/CustomAlert';
+import RealisticLoader from '../../components/RealisticLoader';
 
 import { BASE_URL } from '../../services/apiConfig';
 const API_URL = `${BASE_URL}/api/`;
@@ -303,11 +302,7 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   if (loading) {
-    return (
-      <View style={styles.center}>
-        <RoundedLoader percentage={100} size={100} />
-      </View>
-    );
+    return <RealisticLoader message="Syncing Profile..." />;
   }
 
   if (!isLoggedIn) {
@@ -323,12 +318,13 @@ const ProfileScreen = ({ navigation }) => {
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          style={{ backgroundColor: theme.colors.background }}
         >
           <View style={styles.authHeader}>
             <View style={styles.logoCircle}>
               <Ionicons name="musical-notes" size={50} color="#fff" />
             </View>
-            <Text style={styles.welcomeTitle}>Welcome to MusicZ</Text>
+            <Text style={[styles.welcomeTitle, { color: '#fff' }]}>Welcome to MusicZ</Text>
             <Text style={styles.subSubtitle}>
               {isRegister
                 ? "Join the community and start your musical journey today."
@@ -336,8 +332,8 @@ const ProfileScreen = ({ navigation }) => {
             </Text>
           </View>
 
-          <View style={styles.authCard}>
-            <Text style={styles.formTitle}>
+          <View style={[styles.authCard, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+            <Text style={[styles.formTitle, { color: '#fff' }]}>
               {isRegister ? 'Create Account' : 'Login'}
             </Text>
 
@@ -468,18 +464,14 @@ const ProfileScreen = ({ navigation }) => {
   }
 
   if (isLoggedIn && !profile) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
+    return <RealisticLoader message="Loading Profile..." />;
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.profileContainer}>
+    <ScrollView contentContainerStyle={styles.profileContainer} style={{ backgroundColor: theme.colors.background }}>
       <View style={styles.bgDecorCircle} />
 
-      <View style={styles.profileCard}>
+      <View style={[styles.profileCard, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
         <TouchableOpacity
           style={styles.avatarContainer}
           onPress={handleUpdateProfilePhoto}
