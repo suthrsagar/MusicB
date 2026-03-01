@@ -5,7 +5,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
-import SoundPlayer from 'react-native-sound-player';
+import TrackPlayer from 'react-native-track-player';
 import { theme } from '../../theme';
 
 import { BASE_URL } from '../../services/apiConfig';
@@ -88,15 +88,21 @@ const ManageSongsScreen = () => {
         );
     };
 
-    const playPreview = (item) => {
+    const playPreview = async (item) => {
         if (playingId === item._id) {
-            SoundPlayer.stop();
+            await TrackPlayer.reset();
             setPlayingId(null);
         } else {
             try {
-                SoundPlayer.stop();
+                await TrackPlayer.reset();
                 const url = `${BASE_URL}/api/song/stream/${item.fileId}`;
-                SoundPlayer.playUrl(url);
+                await TrackPlayer.add({
+                    id: item._id,
+                    url: url,
+                    title: item.title,
+                    artist: item.artist
+                });
+                await TrackPlayer.play();
                 setPlayingId(item._id);
             } catch (e) {
                 console.log('Audio Error', e);

@@ -1,5 +1,14 @@
 import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
-import SoundPlayer from 'react-native-sound-player';
+import TrackPlayer, {
+    AppKilledPlaybackBehavior,
+    Capability,
+    Event,
+    RepeatMode,
+    State,
+    usePlaybackState,
+    useProgress,
+    useTrackPlayerEvents
+} from 'react-native-track-player';
 import { Alert, Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 
@@ -7,17 +16,27 @@ const MusicContext = createContext();
 
 import { BASE_URL } from '../services/apiConfig';
 
+const events = [
+    Event.PlaybackState,
+    Event.PlaybackError,
+    Event.PlaybackQueueEnded,
+    Event.PlaybackTrackChanged,
+];
+
 export const MusicProvider = ({ children }) => {
     const [currentSong, setCurrentSong] = useState(null);
     const [queue, setQueue] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(-1);
-    const [isPlaying, setIsPlaying] = useState(false);
+    const [isPlayerReady, setIsPlayerReady] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [progress, setProgress] = useState({ position: 0, duration: 0 });
+
+    const playBackState = usePlaybackState();
+    const progress = useProgress();
+
+    const isPlaying = playBackState.state === State.Playing || playBackState.state === State.Buffering;
 
     const queueRef = useRef([]);
     const currentIndexRef = useRef(-1);
-
 
     useEffect(() => {
         queueRef.current = queue;
@@ -25,183 +44,183 @@ export const MusicProvider = ({ children }) => {
     }, [queue, currentIndex]);
 
     useEffect(() => {
-
-        const onFinishedLoadingURL = SoundPlayer.addEventListener('FinishedLoadingURL', ({ success, url }) => {
-            setLoading(false);
-            if (success) {
-                setIsPlaying(true);
+        const setupPlayer = async () => {
+            let isSetup = false;
+            try {
+                await TrackPlayer.getCurrentTrack();
+                isSetup = true;
+            } catch {
+                await TrackPlayer.setupPlayer();
+                await TrackPlayer.updateOptions({
+                    android: {
+                        appKilledPlaybackBehavior: AppKilledPlaybackBehavior.ContinuePlayback,
+                    },
+                    capabilities: [
+                        Capability.Play,
+                        Capability.Pause,
+                        Capability.SkipToNext,
+                        Capability.SkipToPrevious,
+                        Capability.Stop,
+                        Capability.SeekTo
+                    ],
+                    compactCapabilities: [
+                        Capability.Play,
+                        Capability.Pause,
+                        Capability.SkipToNext,
+                        Capability.SkipToPrevious
+                    ],
+                });
+                isSetup = true;
+            } finally {
+                setIsPlayerReady(isSetup);
             }
-        });
-
-        const onFinishedPlaying = SoundPlayer.addEventListener('FinishedPlaying', ({ success }) => {
-            setIsPlaying(false);
-
-            setTimeout(() => {
-                playNextInternal();
-            }, 500);
-        });
-
-
-        const interval = setInterval(async () => {
-            if (isPlaying) {
-                try {
-                    const info = await SoundPlayer.getInfo();
-                    if (info) {
-                        setProgress({ position: info.currentTime, duration: info.duration });
-                    }
-                } catch (e) { }
-            }
-        }, 1000);
-
-        return () => {
-            onFinishedLoadingURL.remove();
-            onFinishedPlaying.remove();
-            clearInterval(interval);
         };
-    }, [isPlaying]);
+
+        setupPlayer();
+
+        return () => { };
+    }, []);
+
+    useTrackPlayerEvents(events, async (event) => {
+        if (event.type === Event.PlaybackError) {
+            console.warn('Playback error', event.error);
+        }
+
+        if (event.type === Event.PlaybackTrackChanged) {
+            setLoading(false);
+            if (event.nextTrack !== null && event.nextTrack !== undefined) {
+                const track = await TrackPlayer.getTrack(event.nextTrack);
+                if (track && track.originalSong) {
+                    setCurrentSong(track.originalSong);
+                    // Update current index based on queue
+                    const newIdx = queueRef.current.findIndex(s => s.fileId === track.originalSong.fileId);
+                    if (newIdx !== -1) {
+                        setCurrentIndex(newIdx);
+                    }
+                }
+            }
+        }
+
+        if (event.type === Event.PlaybackQueueEnded && event.position > 0) {
+            // Handle next if auto-next is desired, but TrackPlayer automatically advances if queue has items.
+            // If queue ended, we can playNextInternal to loop or just stop. 
+            playNextInternal();
+        }
+    });
 
     const getPlaySource = async (song) => {
         if (song.filePath) {
             const exists = await RNFS.exists(song.filePath);
             if (exists) {
-                // Ensure file:// prefix for local files on Android
                 return song.filePath.startsWith('file://') ? song.filePath : `file://${song.filePath}`;
             }
         }
         return `${BASE_URL}/api/song/stream/${song.fileId}`;
     };
 
+    const convertToTrack = async (song) => {
+        const url = await getPlaySource(song);
+        return {
+            id: song.fileId,
+            url: url,
+            title: song.title || 'Unknown Title',
+            artist: song.artist?.name || 'Unknown Artist',
+            artwork: song.imageUrl ? `${BASE_URL}${song.imageUrl}` : undefined,
+            originalSong: song // Save original data for UI sync
+        };
+    };
+
     const playSong = async (song, playlistList = []) => {
+        if (!isPlayerReady) return;
         try {
             setLoading(true);
             setCurrentSong(song);
 
+            let newQueue = playlistList.length > 0 ? playlistList : [song];
+            setQueue(newQueue);
 
-            if (playlistList.length > 0) {
-                setQueue(playlistList);
-                const newIndex = playlistList.findIndex(s => s.fileId === song.fileId);
-                setCurrentIndex(newIndex !== -1 ? newIndex : 0);
-            } else {
-                setQueue([song]);
-                setCurrentIndex(0);
+            const newIndex = newQueue.findIndex(s => s.fileId === song.fileId);
+            setCurrentIndex(newIndex !== -1 ? newIndex : 0);
+
+            // Convert all to tracks
+            const tracks = await Promise.all(newQueue.map(s => convertToTrack(s)));
+
+            await TrackPlayer.reset();
+            await TrackPlayer.add(tracks);
+
+            if (newIndex !== -1 && newIndex !== 0) {
+                await TrackPlayer.skip(newIndex);
             }
 
-            const source = await getPlaySource(song);
-
-
-            try { SoundPlayer.stop(); } catch (e) { }
-
-
-            setTimeout(() => {
-                SoundPlayer.playUrl(source);
-            }, 100);
+            await TrackPlayer.play();
 
         } catch (e) {
             console.error(e);
             Alert.alert('Error', 'Cannot play this song');
             setLoading(false);
-            setIsPlaying(false);
         }
     };
 
     const playNextInternal = async () => {
-        const currentQueue = queueRef.current;
-        const currentIdx = currentIndexRef.current;
-
-        if (currentQueue.length === 0) return;
-
-        let nextIndex = currentIdx + 1;
-
-
-        if (nextIndex >= currentQueue.length) {
-            nextIndex = 0;
-        }
-
-        const nextSong = currentQueue[nextIndex];
-
-
-        setCurrentIndex(nextIndex);
-        setCurrentSong(nextSong);
-        setLoading(true);
-
+        if (!isPlayerReady) return;
         try {
-            const source = await getPlaySource(nextSong);
-            try { SoundPlayer.stop(); } catch (e) { }
-            setTimeout(() => {
-                SoundPlayer.playUrl(source);
-            }, 100);
+            await TrackPlayer.skipToNext();
         } catch (e) {
             console.log("Error playing next", e);
-            setLoading(false);
+            // If at end of queue, wrap around
+            const currentQueue = queueRef.current;
+            if (currentQueue.length > 0) {
+                await TrackPlayer.skip(0);
+                await TrackPlayer.play();
+            }
         }
     };
 
     const playNext = () => playNextInternal();
 
     const playPrev = async () => {
-        const currentQueue = queueRef.current;
-        const currentIdx = currentIndexRef.current;
-
-        if (currentQueue.length === 0) return;
-
-
+        if (!isPlayerReady) return;
         try {
-            const info = await SoundPlayer.getInfo();
-            if (info && info.currentTime > 3) {
-                SoundPlayer.seek(0);
+            const position = await TrackPlayer.getPosition();
+            if (position > 3) {
+                await TrackPlayer.seekTo(0);
                 return;
             }
-        } catch (e) { }
-
-        let prevIndex = currentIdx - 1;
-        if (prevIndex < 0) {
-            prevIndex = currentQueue.length - 1;
-        }
-
-        const prevSong = currentQueue[prevIndex];
-
-        setCurrentIndex(prevIndex);
-        setCurrentSong(prevSong);
-        setLoading(true);
-
-        try {
-            const source = await getPlaySource(prevSong);
-            try { SoundPlayer.stop(); } catch (e) { }
-            setTimeout(() => {
-                SoundPlayer.playUrl(source);
-            }, 100);
+            await TrackPlayer.skipToPrevious();
         } catch (e) {
             console.log("Error playing prev", e);
-            setLoading(false);
+            const currentQueue = queueRef.current;
+            if (currentQueue.length > 0) {
+                await TrackPlayer.skip(currentQueue.length - 1);
+                await TrackPlayer.play();
+            }
         }
     };
 
-    const togglePlayPause = () => {
-        if (!currentSong) return;
-
+    const togglePlayPause = async () => {
+        if (!currentSong || !isPlayerReady) return;
         try {
-            if (isPlaying) {
-                SoundPlayer.pause();
-                setIsPlaying(false);
+            if (playBackState.state === State.Playing) {
+                await TrackPlayer.pause();
             } else {
-                SoundPlayer.resume();
-                setIsPlaying(true);
+                await TrackPlayer.play();
             }
         } catch (e) {
             console.error(e);
         }
     };
 
-    const seekTo = (seconds) => {
+    const seekTo = async (seconds) => {
+        if (!isPlayerReady) return;
         try {
-            SoundPlayer.seek(seconds);
+            await TrackPlayer.seekTo(seconds);
         } catch (e) { console.error(e); }
     };
 
-    const closePlayer = () => {
+    const closePlayer = async () => {
+        if (!isPlayerReady) return;
         try {
-            SoundPlayer.stop();
-            setIsPlaying(false);
+            await TrackPlayer.reset();
             setCurrentSong(null);
             setQueue([]);
             setCurrentIndex(-1);
@@ -213,13 +232,14 @@ export const MusicProvider = ({ children }) => {
             currentSong,
             isPlaying,
             loading,
-            progress,
+            progress: { position: progress.position, duration: progress.duration },
             playSong,
             playNext,
             playPrev,
             togglePlayPause,
             seekTo,
-            closePlayer
+            closePlayer,
+            isPlayerReady
         }}>
             {children}
         </MusicContext.Provider>

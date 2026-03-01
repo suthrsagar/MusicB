@@ -60,10 +60,14 @@ const PlayerScreen = ({ route, navigation }) => {
   useEffect(() => {
     let timer;
     if (sleepTimer !== null && isPlaying) {
-
       const ms = sleepTimer * 60 * 1000;
-      timer = setTimeout(() => {
-        if (isPlaying) togglePlayPause();
+      timer = setTimeout(async () => {
+        try {
+          const TrackPlayer = require('react-native-track-player').default;
+          await TrackPlayer.pause();
+        } catch (e) {
+          if (isPlaying) togglePlayPause();
+        }
         setSleepTimer(null);
         showAlert('Sleep Timer', 'Music stopped.', 'info');
       }, ms);
