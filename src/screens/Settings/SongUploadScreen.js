@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   Alert,
   ScrollView,
   StatusBar
@@ -18,6 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
 import { BASE_URL } from '../../services/apiConfig';
+import PremiumLoader from '../../components/PremiumLoader';
 
 const SongUploadScreen = () => {
   const navigation = useNavigation();
@@ -233,7 +233,9 @@ const SongUploadScreen = () => {
         </TouchableOpacity>
 
         {loading ? (
-          <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />
+          <View style={{ marginTop: 20, alignItems: 'center' }}>
+            <PremiumLoader size={40} />
+          </View>
         ) : (
           <TouchableOpacity
             style={[

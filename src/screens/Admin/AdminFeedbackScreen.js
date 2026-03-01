@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, Alert, StatusBar } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Alert, StatusBar } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../../theme';
 import { BASE_URL } from '../../services/apiConfig';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
+import PremiumLoader from '../../components/PremiumLoader';
 
 const AdminFeedbackScreen = ({ navigation }) => {
     const [chats, setChats] = useState([]);
@@ -125,7 +126,7 @@ const AdminFeedbackScreen = ({ navigation }) => {
 
             {loading ? (
                 <View style={styles.center}>
-                    <ActivityIndicator size="large" color={theme.colors.primary} />
+                    <PremiumLoader size={50} />
                 </View>
             ) : (
                 <FlatList

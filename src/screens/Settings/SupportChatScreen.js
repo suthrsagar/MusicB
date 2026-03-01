@@ -8,7 +8,6 @@ import {
     FlatList,
     KeyboardAvoidingView,
     Platform,
-    ActivityIndicator,
     StatusBar,
     Alert
 } from 'react-native';
@@ -17,6 +16,7 @@ import axios from 'axios';
 import { theme } from '../../theme';
 import { BASE_URL } from '../../services/apiConfig';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import PremiumLoader from '../../components/PremiumLoader';
 
 const SupportChatScreen = ({ navigation }) => {
     const [messages, setMessages] = useState([]);
@@ -135,7 +135,7 @@ const SupportChatScreen = ({ navigation }) => {
 
             {loading ? (
                 <View style={styles.center}>
-                    <ActivityIndicator size="large" color={theme.colors.primary} />
+                    <PremiumLoader size={50} />
                 </View>
             ) : (
                 <FlatList
@@ -164,7 +164,7 @@ const SupportChatScreen = ({ navigation }) => {
                     disabled={!inputText.trim() || sending}
                 >
                     {sending ? (
-                        <ActivityIndicator size="small" color="#fff" />
+                        <PremiumLoader size={20} color="#fff" />
                     ) : (
                         <Ionicons name="send" size={20} color="#fff" />
                     )}

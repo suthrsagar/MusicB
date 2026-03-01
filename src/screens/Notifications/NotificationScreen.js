@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, StatusBar, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, StatusBar, TouchableOpacity, Alert } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
+import PremiumLoader from '../../components/PremiumLoader';
 
 import { BASE_URL } from '../../services/apiConfig';
 
@@ -65,7 +66,7 @@ const NotificationScreen = () => {
 
             {loading ? (
                 <View style={styles.center}>
-                    <ActivityIndicator size="large" color={theme.colors.primary} />
+                    <PremiumLoader size={50} />
                 </View>
             ) : (
                 <FlatList

@@ -5,7 +5,7 @@ import { theme } from '../../theme';
 import { useMusic } from '../../context/MusicContext';
 import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import RoundedLoader from '../../components/RoundedLoader';
+import PremiumLoader from '../../components/PremiumLoader';
 import CustomAlert from '../../components/CustomAlert';
 import RealisticLoader from '../../components/RealisticLoader';
 
@@ -98,7 +98,15 @@ const DownloadScreen = ({ navigation }) => {
     };
 
     if (loading) {
+<<<<<<< HEAD
         return <RealisticLoader message="Exploring Offline..." />;
+=======
+        return (
+            <View style={styles.loaderContainer}>
+                <PremiumLoader size={60} />
+            </View>
+        );
+>>>>>>> a0c6e9f
     }
 
     return (

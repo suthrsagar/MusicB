@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Switch, TextInput, TouchableOpacity, ScrollView, StyleSheet, StatusBar, Alert, ActivityIndicator, FlatList, Modal } from 'react-native';
+import { View, Text, Switch, TextInput, TouchableOpacity, ScrollView, StyleSheet, StatusBar, Alert, FlatList, Modal } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
+import PremiumLoader from '../../components/PremiumLoader';
 
 import { BASE_URL } from '../../services/apiConfig';
 
@@ -202,7 +203,7 @@ const MonetizationScreen = () => {
             {renderTabs()}
 
             <ScrollView contentContainerStyle={{ padding: 20 }}>
-                {loading ? <ActivityIndicator color={theme.colors.primary} /> : (
+                {loading ? <View style={{ alignItems: 'center' }}><PremiumLoader size={40} /></View> : (
                     <>
                         {activeTab === 'ads' && renderAdsView()}
                         {activeTab === 'plans' && renderPlansView()}

@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, StatusBar, FlatList, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, StatusBar, FlatList, Modal, TextInput, Alert } from 'react-native';
 import { theme } from '../../theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { BASE_URL } from '../../services/apiConfig';
+import PremiumLoader from '../../components/PremiumLoader';
 
 const PlaylistScreen = ({ navigation }) => {
     const [playlists, setPlaylists] = useState([]);
@@ -85,7 +86,7 @@ const PlaylistScreen = ({ navigation }) => {
 
             {loading ? (
                 <View style={styles.center}>
-                    <ActivityIndicator size="large" color={theme.colors.primary} />
+                    <PremiumLoader size={50} />
                 </View>
             ) : playlists.length === 0 ? (
                 <View style={styles.emptyState}>
@@ -132,7 +133,7 @@ const PlaylistScreen = ({ navigation }) => {
                                 onPress={createPlaylist}
                                 disabled={creating || !newPlaylistName.trim()}
                             >
-                                {creating ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveText}>Create</Text>}
+                                {creating ? <PremiumLoader size={20} color="#fff" /> : <Text style={styles.saveText}>Create</Text>}
                             </TouchableOpacity>
                         </View>
                     </View>

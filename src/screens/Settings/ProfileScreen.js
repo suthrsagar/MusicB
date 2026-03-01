@@ -20,9 +20,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useMusic } from '../../context/MusicContext';
-import RoundedLoader from '../../components/RoundedLoader';
+import PremiumLoader from '../../components/PremiumLoader';
 import CustomAlert from '../../components/CustomAlert';
-import RealisticLoader from '../../components/RealisticLoader';
 
 import { BASE_URL } from '../../services/apiConfig';
 const API_URL = `${BASE_URL}/api/`;
@@ -302,7 +301,11 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   if (loading) {
-    return <RealisticLoader message="Syncing Profile..." />;
+    return (
+      <View style={styles.center}>
+        <PremiumLoader size={60} />
+      </View>
+    );
   }
 
   if (!isLoggedIn) {
@@ -407,7 +410,7 @@ const ProfileScreen = ({ navigation }) => {
               disabled={btnLoading}
             >
               {btnLoading ? (
-                <ActivityIndicator color="#fff" />
+                <PremiumLoader size={24} color="#fff" />
               ) : (
                 <>
                   <Text style={styles.primaryBtnText}>
@@ -464,7 +467,11 @@ const ProfileScreen = ({ navigation }) => {
   }
 
   if (isLoggedIn && !profile) {
-    return <RealisticLoader message="Loading Profile..." />;
+    return (
+      <View style={styles.center}>
+        <PremiumLoader size={50} />
+      </View>
+    );
   }
 
   return (
@@ -590,7 +597,7 @@ const ProfileScreen = ({ navigation }) => {
                 onPress={handleChangePassword}
                 disabled={btnLoading}
               >
-                {btnLoading ? <ActivityIndicator color="#fff" /> : <Text style={[styles.modalBtnText, { color: '#fff' }]}>Update</Text>}
+                {btnLoading ? <PremiumLoader size={20} color="#fff" /> : <Text style={[styles.modalBtnText, { color: '#fff' }]}>Update</Text>}
               </TouchableOpacity>
             </View>
           </View>

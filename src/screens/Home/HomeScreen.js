@@ -19,9 +19,8 @@ import { theme } from '../../theme';
 import { BASE_URL } from '../../services/apiConfig';
 
 import { useMusic } from '../../context/MusicContext';
-import RoundedLoader from '../../components/RoundedLoader';
+import PremiumLoader from '../../components/PremiumLoader';
 import CustomAlert from '../../components/CustomAlert';
-import RealisticLoader from '../../components/RealisticLoader';
 
 const SongItem = React.memo(({ item, onPress }) => (
   <TouchableOpacity
@@ -110,7 +109,11 @@ const HomeScreen = () => {
   ), [handlePress]);
 
   if (loading) {
-    return <RealisticLoader message="Discovering Music..." />;
+    return (
+      <View style={styles.loaderContainer}>
+        <PremiumLoader size={80} />
+      </View>
+    );
   }
 
   return (

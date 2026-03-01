@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity, StatusBar, Dimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -7,6 +7,7 @@ import { theme } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 
 import { BASE_URL } from '../../services/apiConfig';
+import PremiumLoader from '../../components/PremiumLoader';
 const screenWidth = Dimensions.get('window').width;
 
 const AnalyticsScreen = () => {
@@ -35,7 +36,7 @@ const AnalyticsScreen = () => {
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <PremiumLoader size={60} />
             </View>
         );
     }

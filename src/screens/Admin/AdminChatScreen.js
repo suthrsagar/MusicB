@@ -8,7 +8,6 @@ import {
     FlatList,
     KeyboardAvoidingView,
     Platform,
-    ActivityIndicator,
     StatusBar,
     Alert
 } from 'react-native';
@@ -17,6 +16,7 @@ import axios from 'axios';
 import { theme } from '../../theme';
 import { BASE_URL } from '../../services/apiConfig';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import PremiumLoader from '../../components/PremiumLoader';
 
 const AdminChatScreen = ({ route, navigation }) => {
     const { userId, username } = route.params;
@@ -126,7 +126,7 @@ const AdminChatScreen = ({ route, navigation }) => {
 
             {loading ? (
                 <View style={styles.center}>
-                    <ActivityIndicator size="large" color={theme.colors.primary} />
+                    <PremiumLoader size={50} />
                 </View>
             ) : (
                 <FlatList
@@ -155,7 +155,7 @@ const AdminChatScreen = ({ route, navigation }) => {
                     disabled={!inputText.trim() || sending}
                 >
                     {sending ? (
-                        <ActivityIndicator size="small" color="#fff" />
+                        <PremiumLoader size={20} color="#fff" />
                     ) : (
                         <Ionicons name="send" size={20} color="#fff" />
                     )}

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, StatusBar, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, StatusBar, Platform } from 'react-native';
 import { theme } from '../../theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../services/apiConfig';
 import { useMusic } from '../../context/MusicContext';
+import PremiumLoader from '../../components/PremiumLoader';
 
 const PlaylistDetailScreen = ({ route, navigation }) => {
     const { playlistId } = route.params;
@@ -60,7 +61,7 @@ const PlaylistDetailScreen = ({ route, navigation }) => {
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <PremiumLoader size={60} />
             </View>
         );
     }

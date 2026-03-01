@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert, ScrollView, StatusBar } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Alert, ScrollView, StatusBar } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -7,6 +7,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
 
 import { BASE_URL } from '../../services/apiConfig';
+import PremiumLoader from '../../components/PremiumLoader';
 
 const AdminDashboard = () => {
     const navigation = useNavigation();
@@ -37,7 +38,7 @@ const AdminDashboard = () => {
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <PremiumLoader size={60} />
             </View>
         );
     }
