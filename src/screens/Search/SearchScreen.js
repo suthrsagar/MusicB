@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, StatusBar, Image } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, StatusBar, Image } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -7,6 +7,7 @@ import { theme } from '../../theme';
 
 import { BASE_URL } from '../../services/apiConfig';
 import { useMusic } from '../../context/MusicContext';
+import PremiumLoader from '../../components/PremiumLoader';
 
 export default function SearchScreen() {
   const navigation = useNavigation();
@@ -106,7 +107,9 @@ export default function SearchScreen() {
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />
+          <View style={{ marginTop: 20, alignItems: 'center' }}>
+            <PremiumLoader size={40} />
+          </View>
         ) : (
           <FlatList
             data={filteredSongs}

@@ -6,7 +6,6 @@ import {
     TouchableOpacity,
     StyleSheet,
     Alert,
-    ActivityIndicator,
     StatusBar,
     ScrollView,
     RefreshControl,
@@ -20,6 +19,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { BASE_URL } from '../../services/apiConfig';
 import messaging from '@react-native-firebase/messaging';
+import PremiumLoader from '../../components/PremiumLoader';
 
 const API_URL = `${BASE_URL}/api/notifications`;
 
@@ -165,7 +165,7 @@ const SendNotificationScreen = () => {
 
                     <TouchableOpacity style={styles.sendBtn} onPress={handleSend} disabled={loading} activeOpacity={0.8}>
                         {loading ? (
-                            <ActivityIndicator color="#fff" />
+                            <PremiumLoader size={24} color="#fff" />
                         ) : (
                             <>
                                 <Text style={styles.sendBtnText}>Send Notification</Text>

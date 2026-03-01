@@ -22,7 +22,7 @@ import { theme } from '../../theme';
 import { useMusic } from '../../context/MusicContext';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import RoundedLoader from '../../components/RoundedLoader';
+import PremiumLoader from '../../components/PremiumLoader';
 import CustomAlert from '../../components/CustomAlert';
 
 import { BASE_URL } from '../../services/apiConfig';
@@ -391,7 +391,7 @@ const PlayerScreen = ({ route, navigation }) => {
 
           {isDownloading && (
             <View style={styles.loaderOverlay}>
-              <RoundedLoader percentage={downloadProgress} size={150} />
+              <PremiumLoader size={100} color="#fff" />
             </View>
           )}
         </View>
@@ -440,7 +440,7 @@ const PlayerScreen = ({ route, navigation }) => {
             <TouchableOpacity style={styles.mainPlayBtn} onPress={togglePlayPause} disabled={loading}>
               <View style={styles.playInner}>
                 {loading ? (
-                  <ActivityIndicator color="#fff" size="large" />
+                  <PremiumLoader size={40} color="#fff" />
                 ) : (
                   <Ionicons name={isPlaying ? "pause" : "play"} size={50} color="#fff" style={!isPlaying && { marginLeft: 5 }} />
                 )}

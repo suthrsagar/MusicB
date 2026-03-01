@@ -5,7 +5,7 @@ import { theme } from '../../theme';
 import { useMusic } from '../../context/MusicContext';
 import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import RoundedLoader from '../../components/RoundedLoader';
+import PremiumLoader from '../../components/PremiumLoader';
 import CustomAlert from '../../components/CustomAlert';
 
 import { useIsFocused } from '@react-navigation/native';
@@ -99,7 +99,7 @@ const DownloadScreen = ({ navigation }) => {
     if (loading) {
         return (
             <View style={styles.loaderContainer}>
-                <RoundedLoader percentage={100} size={100} />
+                <PremiumLoader size={60} />
             </View>
         );
     }

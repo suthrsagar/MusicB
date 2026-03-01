@@ -19,7 +19,7 @@ import { theme } from '../../theme';
 import { BASE_URL } from '../../services/apiConfig';
 
 import { useMusic } from '../../context/MusicContext';
-import RoundedLoader from '../../components/RoundedLoader';
+import PremiumLoader from '../../components/PremiumLoader';
 import CustomAlert from '../../components/CustomAlert';
 
 const SongItem = React.memo(({ item, onPress }) => (
@@ -111,7 +111,7 @@ const HomeScreen = () => {
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
-        <RoundedLoader percentage={100} size={100} />
+        <PremiumLoader size={80} />
       </View>
     );
   }

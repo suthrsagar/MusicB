@@ -22,7 +22,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '../../theme';
 import { useMusic } from '../../context/MusicContext';
-import RoundedLoader from '../../components/RoundedLoader';
+import PremiumLoader from '../../components/PremiumLoader';
 import CustomAlert from '../../components/CustomAlert';
 
 import { BASE_URL } from '../../services/apiConfig';
@@ -305,7 +305,7 @@ const ProfileScreen = ({ navigation }) => {
   if (loading) {
     return (
       <View style={styles.center}>
-        <RoundedLoader percentage={100} size={100} />
+        <PremiumLoader size={60} />
       </View>
     );
   }
@@ -411,7 +411,7 @@ const ProfileScreen = ({ navigation }) => {
               disabled={btnLoading}
             >
               {btnLoading ? (
-                <ActivityIndicator color="#fff" />
+                <PremiumLoader size={24} color="#fff" />
               ) : (
                 <>
                   <Text style={styles.primaryBtnText}>
@@ -470,7 +470,7 @@ const ProfileScreen = ({ navigation }) => {
   if (isLoggedIn && !profile) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <PremiumLoader size={50} />
       </View>
     );
   }
@@ -598,7 +598,7 @@ const ProfileScreen = ({ navigation }) => {
                 onPress={handleChangePassword}
                 disabled={btnLoading}
               >
-                {btnLoading ? <ActivityIndicator color="#fff" /> : <Text style={[styles.modalBtnText, { color: '#fff' }]}>Update</Text>}
+                {btnLoading ? <PremiumLoader size={20} color="#fff" /> : <Text style={[styles.modalBtnText, { color: '#fff' }]}>Update</Text>}
               </TouchableOpacity>
             </View>
           </View>
