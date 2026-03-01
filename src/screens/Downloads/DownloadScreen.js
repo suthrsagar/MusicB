@@ -7,7 +7,6 @@ import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PremiumLoader from '../../components/PremiumLoader';
 import CustomAlert from '../../components/CustomAlert';
-import RealisticLoader from '../../components/RealisticLoader';
 
 import { useIsFocused } from '@react-navigation/native';
 
@@ -98,15 +97,11 @@ const DownloadScreen = ({ navigation }) => {
     };
 
     if (loading) {
-<<<<<<< HEAD
-        return <RealisticLoader message="Exploring Offline..." />;
-=======
         return (
             <View style={styles.loaderContainer}>
                 <PremiumLoader size={60} />
             </View>
         );
->>>>>>> a0c6e9f
     }
 
     return (
